@@ -1,4 +1,4 @@
-﻿#persistent
+﻿#Include lib_json.ahk
 #Include Socket.ahk
 #Include IRCClass.ahk
 FileRead, Greetings, Greetings.txt
@@ -131,8 +131,10 @@ class Bot extends IRC
 		; if it is a command
 		if (RegexMatch(Msg, "^(?:``|\/)([^ ]+)(?: (.+))?$", Match))
 		{
-			if Match1 in Ahk,Script,Both,Docs
+			if Match1 in Ahk,Script,Both,Docs,g
 				this.SendPRIVMSG(Params[1], Search(Match1, Match2))
+			else if (Match1 = "BTC" && (BTC := GetBTC()[Match2, "24h"]))
+				this.SendPRIVMSG(Params[1], BTC)
 		}
 	}
 	
@@ -175,6 +177,8 @@ Search(CSE, Text)
 		URI := "&cx=017058124035087163209%3Ag-1wna_xozc"
 	else if (CSE = "Docs")
 		URI := "&cx=017058124035087163209%3Az23pf7b3a3q"
+	else if (CSE = "g")
+		URI := ""
 	else
 		return "Error, not an available search engine"
 	URI .= "&q=" UriEncode(Text)
@@ -237,3 +241,44 @@ StrPutVar(Str, ByRef Var, Enc = "")
 	VarSetCapacity(Var, Len, 0)
 	Return, StrPut(Str, &Var, Enc)
 }
+
+; Fetch latest bitcoin info from bitcoincharts api
+GetBTC()
+{
+	static API := "http://api.bitcoincharts.com/v1/weighted_prices.json"
+	
+	; Read the last bitcoin data from file.
+	; If there is data, load it
+	; If not, use a dummy to indicate we should fetch new data
+	FileRead, File, LastBTC.txt
+	if File
+		File := Json_From(File)
+	else
+		File := [0,"Error"]
+	
+	; If current time is more than 1 hour from saved/last time
+	if ((A_TickCount - File[1]) > (60*60*1000))
+	{
+		ToolTip, Fetching new prices
+		
+		; Fetch the prices
+		BTC := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+		BTC.Open("GET", API)
+		BTC.Send()
+		BTC := BTC.ResponseText()
+		
+		; Decode the prices
+		Rates := Json_From(BTC)
+		
+		; Save the prices to file
+		FileDelete, LastBTC.txt
+		FileAppend, % Json_To([A_TickCount, Rates]), LastBTC.txt
+		
+		ToolTip
+	}
+	else ; Read rates from file
+		Rates := File[2]
+	
+	return Rates
+}
+
