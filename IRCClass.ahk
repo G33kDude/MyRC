@@ -105,7 +105,6 @@
 		this.SendText("WHO " this.Nick " %uh")
 	}
 	
-	;:hubbard.freenode.net 354 GeekDude ~GeekDud3 c-174-53-64-143.hsd1.wv.comcast.net
 	_on354(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
 		if (Params[1] == this.Nick)

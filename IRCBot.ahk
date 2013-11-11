@@ -3,7 +3,7 @@
 #Include IRCClass.ahk
 FileRead, Greetings, Greetings.txt
 
-IRC_Nick := "GeekD00d"
+IRC_Nick := "GeekBot"
 
 Gui, Margin, 5, 5
 Gui, Font, s9, Lucida Console
@@ -13,7 +13,6 @@ Gui, Add, DropDownList, w145 h20 vChannel r20, |%IRC_Nick%||
 Gui, Add, Edit, w800 h20 xp+150 vText
 Gui, Add, Button, yp-1 xp+805 w45 h22 gSend Default, SEND
 Gui, Show
-;return
 
 IRC := new Bot()
 IRC.Connect("irc.freenode.net", 6667, IRC_Nick)
@@ -31,11 +30,6 @@ if RegexMatch(Text, "^/([^ ]+)(?: (.+))?$", Match)
 		IRC.SendText("JOIN " Match2)
 	else if (Match1 = "me")
 		IRC.SendACTION(Channel, Match2)
-	else if (Match1 = "quit")
-	{
-		IRC.SendQUIT(Match2)
-		SetTimer, ExitSub, -3000
-	}
 	else if (Match1 = "part")
 		IRC.SendPART(Channel, Match2)
 	else if (Match1 = "reload")
@@ -46,8 +40,13 @@ if RegexMatch(Text, "^/([^ ]+)(?: (.+))?$", Match)
 		IRC.SendText(Match2)
 	else if (Match1 = "nick")
 		IRC.SendNICK(Match2)
-	else if (Match1 = "hi")
+	else if (Match1 = "greetings")
 		FileRead, Greetings, Greetings.txt
+	else if (Match1 = "quit")
+	{
+		IRC.SendQUIT(Match2)
+		SetTimer, ExitSub, -3000
+	}
 	else
 		IRC.Log("ERROR: Unkown command " Match1)
 	return
@@ -150,6 +149,7 @@ class Bot extends IRC
 	}
 }
 
+; SendMessages courtesy of TheGood http://www.autohotkey.com/board/topic/52441-append-text-to-an-edit-control/?p=328342
 AppendChat(Text)
 {
 	global hChat

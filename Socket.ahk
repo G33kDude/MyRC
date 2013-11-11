@@ -1,4 +1,6 @@
-﻿class Socket
+﻿; Sockets library by Bentschi http://www.autohotkey.com/board/topic/94376-socket-class-%C3%BCberarbeitet/
+
+class Socket
 {
   static __eventMsg := 0x9987
   
