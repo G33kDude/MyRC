@@ -163,7 +163,6 @@
 	
 	SendNICK(NewNick)
 	{
-		ToolTip, % NewNick 
 		return this.SendText("NICK " NewNick)
 	}
 	
