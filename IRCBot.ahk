@@ -7,6 +7,7 @@ IRC_Nick := "GeekBot"
 
 Gui, Margin, 5, 5
 Gui, Font, s9, Lucida Console
+Gui, +HWNDhWnd
 Gui, Add, Edit, w1000 h300 ReadOnly vLog HWNDhLog
 Gui, Add, Edit, w1000 h300 ReadOnly vChat HWNDhChat
 Gui, Add, DropDownList, w145 h20 vChannel r20, |%IRC_Nick%||
@@ -256,8 +257,11 @@ GetBTC()
 	else
 		File := [0,"Error"]
 	
-	; If current time is more than 1 hour from saved/last time
-	if ((A_TickCount - File[1]) > (60*60*1000))
+	
+	LastTime := File[1], Elapsed := A_Now
+	EnvSub, Elapsed, LastTime, Hours
+	; If more than 1 hour has elapsed, or there is no saved last time
+	if (Elapsed || !LastTime)
 	{
 		ToolTip, Fetching new prices
 		
@@ -272,7 +276,7 @@ GetBTC()
 		
 		; Save the prices to file
 		FileDelete, LastBTC.txt
-		FileAppend, % Json_To([A_TickCount, Rates]), LastBTC.txt
+		FileAppend, % Json_To([A_Now, Rates]), LastBTC.txt
 		
 		ToolTip
 	}
