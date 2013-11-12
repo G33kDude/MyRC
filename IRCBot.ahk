@@ -74,7 +74,7 @@ class Bot extends IRC
 	; RPL_ENDOFMOTD
 	on376(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
-		this.SendJOIN("#Sjc_Bot")
+		this.SendJOIN("#maestrith")
 	}
 	
 	onPART(Nick,User,Host,Cmd,Params,Msg,Data)
@@ -136,7 +136,10 @@ class Bot extends IRC
 			if Match1 in Ahk,Script,Both,Docs,g
 				this.SendPRIVMSG(Params[1], Search(Match1, Match2))
 			else if (Match1 = "BTC" && (BTC := GetBTC()[Match2, "24h"]))
-				this.SendPRIVMSG(Params[1], BTC)
+			{
+				StringUpper, Match2, Match2
+				this.SendPRIVMSG(Params[1], "1BTC == " BTC . Match2)
+			}
 		}
 	}
 	
