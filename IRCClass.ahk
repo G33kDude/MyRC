@@ -16,6 +16,8 @@
 		
 		this.TCP.Connect(Server, Port)
 		
+		if Pass
+			this.SendText("PASS " Pass)
 		this.SendText("NICK " this.Nick)
 		this.SendText("USER " this.User " 0 * :" this.Name)
 	}

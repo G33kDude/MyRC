@@ -2,6 +2,7 @@
 #Include Socket.ahk
 #Include IRCClass.ahk
 FileRead, Greetings, Greetings.txt
+FileRead, Passwords, %A_Desktop%\IRC.txt
 
 IRC_Nick := "GeekBot"
 
@@ -16,7 +17,7 @@ Gui, Add, Button, yp-1 xp+805 w45 h22 gSend Default, SEND
 Gui, Show
 
 IRC := new Bot()
-IRC.Connect("irc.freenode.net", 6667, IRC_Nick)
+IRC.Connect("irc.freenode.net", 6667, IRC_Nick, IRC_Nick, IRC_Nick, Passwords)
 return
 
 Send:
