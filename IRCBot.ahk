@@ -145,15 +145,20 @@ class Bot extends IRC
 	
 	Log(Text)
 	{
-		global hLog
-		Text := RegExReplace(Text, "\R", "") "`r`n"
-		
-		SendMessage, 0x000E, 0, 0,, ahk_id %hLog% ;WM_GETTEXTLENGTH
-		SendMessage, 0x00B1, ErrorLevel, ErrorLevel,, ahk_id %hLog% ;EM_SETSEL
-		SendMessage, 0x00C2, False, &Text,, ahk_id %hLog% ;EM_REPLACESEL
-		
-		SendMessage, 0x0115, 7, 0,, ahk_id %hLog% ;WM_VSCROLL
+		AppendLog(Text)
 	}
+}
+
+AppendLog(Text)
+{
+	global hLog
+	Text := RegExReplace(Text, "\R", "") "`r`n"
+	
+	SendMessage, 0x000E, 0, 0,, ahk_id %hLog% ;WM_GETTEXTLENGTH
+	SendMessage, 0x00B1, ErrorLevel, ErrorLevel,, ahk_id %hLog% ;EM_SETSEL
+	SendMessage, 0x00C2, False, &Text,, ahk_id %hLog% ;EM_REPLACESEL
+	
+	SendMessage, 0x0115, 7, 0,, ahk_id %hLog% ;WM_VSCROLL
 }
 
 ; SendMessages courtesy of TheGood http://www.autohotkey.com/board/topic/52441-append-text-to-an-edit-control/?p=328342
