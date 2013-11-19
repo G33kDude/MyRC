@@ -75,6 +75,7 @@ class Bot extends IRC
 	on376(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
 		this.SendJOIN("#maestrith")
+		this.SendJOIN("#Sjc_Bot")
 	}
 	
 	onPART(Nick,User,Host,Cmd,Params,Msg,Data)
@@ -140,6 +141,8 @@ class Bot extends IRC
 				StringUpper, Match2, Match2
 				this.SendPRIVMSG(Params[1], "1BTC == " BTC . Match2)
 			}
+			else if (Match1 = "8")
+				this.SendPRIVMSG(Params[1], (Rand(0,1) ? "Yes" : "No"))
 		}
 	}
 	
@@ -147,6 +150,12 @@ class Bot extends IRC
 	{
 		AppendLog(Text)
 	}
+}
+
+Rand(Min, Max)
+{
+	Random, Rand, Min, Max
+	return Rand
 }
 
 AppendLog(Text)
@@ -175,6 +184,49 @@ AppendChat(Text)
 	SendMessage, 0x0115, 7, 0,, ahk_id %hChat% ;WM_VSCROLL
 }
 
+; Fetch latest bitcoin info from bitcoincharts api
+GetBTC()
+{
+	static API := "http://api.bitcoincharts.com/v1/weighted_prices.json"
+	
+	; Read the last bitcoin data from file.
+	; If there is data, load it
+	; If not, use a dummy to indicate we should fetch new data
+	FileRead, File, LastBTC.txt
+	if File
+		File := Json_From(File)
+	else
+		File := [0,"Error"]
+	
+	
+	LastTime := File[1], Elapsed := A_Now
+	EnvSub, Elapsed, LastTime, Hours
+	; If more than 1 hour has elapsed, or there is no saved last time
+	if (Elapsed || !LastTime)
+	{
+		ToolTip, Fetching new prices
+		
+		; Fetch the prices
+		BTC := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+		BTC.Open("GET", API)
+		BTC.Send()
+		BTC := BTC.ResponseText()
+		
+		; Decode the prices
+		Rates := Json_From(BTC)
+		
+		; Save the prices to file
+		FileDelete, LastBTC.txt
+		FileAppend, % Json_To([A_Now, Rates]), LastBTC.txt
+		
+		ToolTip
+	}
+	else ; Read rates from file
+		Rates := File[2]
+	
+	return Rates
+}
+
 Search(CSE, Text)
 {
 	static Base := "https://ajax.googleapis.com/ajax/services/search/web?v=1.0"
@@ -196,14 +248,17 @@ Search(CSE, Text)
 	Google := ComObjCreate("WinHttp.WinHttpRequest.5.1")
 	Google.Open("GET", Base . URI)
 	Google.Send()
+	Response := Google.ResponseText()
 	
-	JSON := Google.ResponseText()
+	JSON := Json_From(Response)
 	
-	if !(RegexMatch(JSON, """url"":""(.*?)"",""", Url))
+	Url := UriDecode(JSON["responseData", "results", 1, "titleNoFormatting"])
+	Desc := UriDecode(JSON["responseData", "results", 1, "url"])
+	
+	if !(Url && Desc)
 		return
-	if !(RegexMatch(JSON, """titleNoFormatting"":""(.*?)"",""", Desc))
-		return
-	return Url1 " - " Desc1
+	
+	return Desc " - " Url
 }
 
 ; modified from jackieku's code (http://www.autohotkey.com/forum/post-310959.html#310959)
@@ -251,47 +306,3 @@ StrPutVar(Str, ByRef Var, Enc = "")
 	VarSetCapacity(Var, Len, 0)
 	Return, StrPut(Str, &Var, Enc)
 }
-
-; Fetch latest bitcoin info from bitcoincharts api
-GetBTC()
-{
-	static API := "http://api.bitcoincharts.com/v1/weighted_prices.json"
-	
-	; Read the last bitcoin data from file.
-	; If there is data, load it
-	; If not, use a dummy to indicate we should fetch new data
-	FileRead, File, LastBTC.txt
-	if File
-		File := Json_From(File)
-	else
-		File := [0,"Error"]
-	
-	
-	LastTime := File[1], Elapsed := A_Now
-	EnvSub, Elapsed, LastTime, Hours
-	; If more than 1 hour has elapsed, or there is no saved last time
-	if (Elapsed || !LastTime)
-	{
-		ToolTip, Fetching new prices
-		
-		; Fetch the prices
-		BTC := ComObjCreate("WinHttp.WinHttpRequest.5.1")
-		BTC.Open("GET", API)
-		BTC.Send()
-		BTC := BTC.ResponseText()
-		
-		; Decode the prices
-		Rates := Json_From(BTC)
-		
-		; Save the prices to file
-		FileDelete, LastBTC.txt
-		FileAppend, % Json_To([A_Now, Rates]), LastBTC.txt
-		
-		ToolTip
-	}
-	else ; Read rates from file
-		Rates := File[2]
-	
-	return Rates
-}
-
