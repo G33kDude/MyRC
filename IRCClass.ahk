@@ -50,7 +50,7 @@
 			; :Nick!User@Host Command Parameter Parameter Parameter :Message
 			if (!RegExMatch(Value, "^(?:\:([^\!\@ ]*)(?:(?:\!([^\@]*))?\@([^ ]*))? )?([^ ]+)(?: ([^ ]+(?: [^ ]+)*?))??(?: \:(.*))?$", Match))
 			{
-				this.Log("Malformed message recieved")
+				this.Log("Malformed message recieved:" Value)
 				continue
 			}
 			
@@ -69,8 +69,11 @@
 	
 	_onNICK(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
-		if (User == this.User)
+		if (Nick == this.Nick)
 			this.Nick := Msg
+		
+		for Channel, NickList in this.Channels
+			NickList[Msg] := NickList[Nick], NickList.Remove(Nick)
 	}
 	
 	_onPING(Nick,User,Host,Cmd,Params,Msg,Data)
@@ -80,17 +83,32 @@
 	
 	_onJOIN(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
-		; if you're joining a channel you're not in
-		if (User == this.User && !this.IsIn(Params[1]))
-			this.Channels.Insert(Params[1])
+		if (Nick == this.Nick)
+			this.Channels.Insert(Params[1], [])
+		else
+			this.Channels[Params[1]].Insert(Nick, [""])
 	}
 	
 	_onPART(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
-		if (User == this.User)
-			Loop, % (this.Channels.MaxIndex(),i:=0)
-				if (this.Channels[++i] == Params[1])
-					this.Channels.Remove(i--)
+		if (Nick == this.Nick)
+			this.Channels.Remove(Params[1])
+		else
+			this.Channels[Params[1]].Remove(Nick)
+	}
+	
+	_onKICK(Nick,User,Host,Cmd,Params,Msg,Data)
+	{
+		if (Params[2] == this.Nick)
+			this.Channels.Remove(Params[1])
+		else
+			this.Channels[Params[1]].Remove(Nick)
+	}
+	
+	_onQUIT(Nick,User,Host,Cmd,Params,Msg,Data)
+	{
+		for Channel,NickList in % this.Channels
+			NickList.Remove(Nick)
 	}
 	
 	_onPRIVMSG(Nick,User,Host,Cmd,Params,Msg,Data)
@@ -116,6 +134,36 @@
 		}
 	}
 	
+	_on353(Nick,User,Host,Cmd,Params,Msg,Data)
+	{
+		Channel := this.Channels[Params[3]]
+		if (!Index := Channel.MaxIndex())
+			Index := 0
+		
+		for i, Nick in StrSplit(Msg, " ")
+		{
+			Prefix := SubStr(Nick, 1, 1)
+			if Prefix in @,+
+				Nick := SubStr(Nick, 2)
+			else
+				Prefix := ""
+			
+			Channel.Insert(Nick, [Prefix])
+		}
+	}
+	
+	GetMeta(Channel, prefix)
+	{
+		if !this.isIn(Channel)
+			return False
+		
+		Out := []
+		for Nick, Meta in this.Channels[Channel]
+			if (Meta[1] == Prefix)
+				Out.Insert(Nick)
+		return Out
+	}
+	
 	SendText(msg, encoding="UTF-8")
 	{
 		msg .= "`r`n"
@@ -127,10 +175,7 @@
 	
 	IsIn(Channel)
 	{
-		For k,v in this.Channels
-			if (v == Channel)
-				return v
-		return false
+		return this.Channels.HasKey(Channel)
 	}
 	
 	SendCTCP(Nick, Command, Text)

@@ -8,16 +8,41 @@ IRC_Nick := "GeekBot"
 
 Gui, Margin, 5, 5
 Gui, Font, s9, Lucida Console
-Gui, +HWNDhWnd
+Gui, +HWNDhWnd +Resize
 Gui, Add, Edit, w1000 h300 ReadOnly vLog HWNDhLog
-Gui, Add, Edit, w1000 h300 ReadOnly vChat HWNDhChat
-Gui, Add, DropDownList, w145 h20 vChannel r20, |%IRC_Nick%||
-Gui, Add, Edit, w800 h20 xp+150 vText
-Gui, Add, Button, yp-1 xp+805 w45 h22 gSend Default, SEND
+Gui, Add, Edit, xm y310 w1000 h299 ReadOnly vChat HWNDhChat
+Gui, Add, ListView, ym x1010 w130 h610 vListView -hdr, Hide
+Gui, Add, DropDownList, xm w145 h20 vChannel r20 gDropDown, %IRC_Nick%||
+Gui, Add, Edit, w935 h20 x155 yp vText
+Gui, Add, Button, yp-1 xp940 w45 h22 vSend gSend Default, SEND
 Gui, Show
 
 IRC := new Bot()
 IRC.Connect("irc.freenode.net", 6667, IRC_Nick, IRC_Nick, IRC_Nick, Passwords)
+return
+
+GuiSize:
+EditH := Floor((A_GuiHeight-40) / 2)
+EditW := A_GuiWidth - (15 + 130)
+ChatY := 10 + EditH
+ListViewX := A_GuiWidth - 135
+ListViewH := A_GuiHeight - 35
+
+BarY := A_GuiHeight - 25
+TextW := A_GuiWidth - (20 + 145 + 45) ; Margin + DDL + Send
+SendX := A_GuiWidth - 50
+SendY := BarY - 1
+
+GuiControl, Move, Log, x5 y5 w%EditW% h%EditH%
+GuiControl, Move, Chat, x5 y%ChatY% w%EditW% h%EditH%
+GuiControl, Move, ListView, x%ListViewX% y5 w130 h%ListViewH%
+GuiControl, Move, Channel, x5 y%BarY% w145 h20
+Guicontrol, Move, Text, x155 y%BarY% w%TextW% h20
+Guicontrol, Move, Send, x%SendX% y%SendY% w45 h22
+return
+
+DropDown:
+IRC.UpdateListView()
 return
 
 Send:
@@ -31,7 +56,10 @@ if RegexMatch(Text, "^/([^ ]+)(?: (.+))?$", Match)
 	if (Match1 = "join")
 		IRC.SendText("JOIN " Match2)
 	else if (Match1 = "me")
+	{
 		IRC.SendACTION(Channel, Match2)
+		AppendChat(Channel " * " IRC.Nick " " Match2)
+	}
 	else if (Match1 = "part")
 		IRC.SendPART(Channel, Match2)
 	else if (Match1 = "reload")
@@ -67,8 +95,15 @@ class Bot extends IRC
 {
 	onJOIN(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
-		if (User == this.User)
-			this.UpdateDropDown()
+		if (Nick == this.Nick)
+			this.UpdateDropDown(Params[1])
+		AppendChat(Params[1] " " Nick " has joined")
+		this.UpdateListView()
+	}
+	
+	on366(Nick,User,Host,Cmd,Params,Msg,Data)
+	{
+		this.UpdateListView()
 	}
 	
 	; RPL_ENDOFMOTD
@@ -80,22 +115,56 @@ class Bot extends IRC
 	
 	onPART(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
-		if (User == this.User)
+		if (Nick == this.Nick)
 			this.UpdateDropDown()
+		AppendChat(Params[1] " " Nick " has parted" (Msg ? " (" Msg ")" : ""))
+		this.UpdateListView()
 	}
 	
 	onNICK(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
+		; Can't use nick, was already handled by class
 		if (User == this.User)
 			this.UpdateDropDown()
+		AppendChat(Nick " changed its nick to " Msg)
+		this.UpdateListView()
 	}
 	
-	UpdateDropDown()
+	onKICK(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
-		DropDL := "|" this.Nick
-		for k,v in this.Channels
-			DropDL .= "|" v
-		GuiControl,, Channel, % DropDL "||"
+		if (Params[2] == this.Nick)
+			this.UpdateDropDown()
+		AppendChat(Params[1] " " Params[2] " was kicked by " Nick " (" Msg ")")
+		this.UpdateListView()
+	}
+	
+	onQUIT(Nick,User,Host,Cmd,Params,Msg,Data)
+	{
+		AppendChat(Nick " has quit (" Msg ")")
+		this.UpdateListView()
+	}
+	
+	UpdateDropDown(Default="")
+	{
+		DropDL := "|" this.Nick "|"
+		if (!Default)
+			GuiControlGet, Default,, Channel
+		for Channel in this.Channels
+			DropDL .= Channel "|" (Channel==Default ? "|" : "")
+		if (!this.Channels.hasKey(Default))
+			DropDL .= "|"
+		GuiControl,, Channel, % DropDL
+	}
+	
+	UpdateListView()
+	{
+		GuiControlGet, Channel
+		if !IRC.IsIn(Channel)
+			return
+		
+		LV_Delete()
+		For Nick,Meta in IRC.Channels[Channel]
+			LV_Add("", Meta[1] . Nick)
 	}
 	
 	onINVITE(Nick,User,Host,Cmd,Params,Msg,Data)
@@ -135,14 +204,23 @@ class Bot extends IRC
 		if (RegexMatch(Msg, "^(?:``|\/)([^ ]+)(?: (.+))?$", Match))
 		{
 			if Match1 in Ahk,Script,Both,Docs,g
-				this.SendPRIVMSG(Params[1], Search(Match1, Match2))
+			{
+				Search := Search(Match1, Match2)
+				this.SendPRIVMSG(Params[1], Search)
+				AppendChat(Params[1] " " this.Nick " " Search)
+			}
 			else if (Match1 = "BTC" && (BTC := GetBTC()[Match2, "24h"]))
 			{
 				StringUpper, Match2, Match2
 				this.SendPRIVMSG(Params[1], "1BTC == " BTC . Match2)
+				AppendChat(Params[1] " " this.Nick " 1BTC == " BTC . Match2)
 			}
 			else if (Match1 = "8")
-				this.SendPRIVMSG(Params[1], (Rand(0,1) ? "Yes" : "No"))
+			{
+				Random, Rand, 0, 1
+				this.SendPRIVMSG(Params[1], Rand ? "Yes" : "No")
+				AppendChat(Params[1] " " this.Nick " " (Rand ? "Yes" : "No"))
+			}
 		}
 	}
 	
@@ -175,7 +253,9 @@ AppendChat(Text)
 {
 	global hChat
 	
-	Text := RegExReplace(Text, "\R", "") "`r`n"
+	FormatTime, Stamp,, [hh:mm]
+	
+	Text := Stamp " " RegExReplace(Text, "\R", "") "`r`n"
 	
 	SendMessage, 0x000E, 0, 0,, ahk_id %hChat% ;WM_GETTEXTLENGTH
 	SendMessage, 0x00B1, ErrorLevel, ErrorLevel,, ahk_id %hChat% ;EM_SETSEL
