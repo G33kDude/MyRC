@@ -163,8 +163,10 @@ class Bot extends IRC
 			return
 		
 		LV_Delete()
-		For Nick,Meta in IRC.Channels[Channel]
-			LV_Add("", Meta[1] . Nick)
+		; Hypothetically, @+ could exist
+		for i,v in ["@,@+","+",""]
+			for Nick,Meta in IRC.GetMeta(Channel, v)
+				LV_Add("", Meta[1] . Nick)
 	}
 	
 	onINVITE(Nick,User,Host,Cmd,Params,Msg,Data)
@@ -207,19 +209,19 @@ class Bot extends IRC
 			{
 				Search := Search(Match1, Match2)
 				this.SendPRIVMSG(Params[1], Search)
-				AppendChat(Params[1] " " this.Nick " " Search)
+				AppendChat(Params[1] " <" this.Nick "> " Search)
 			}
 			else if (Match1 = "BTC" && (BTC := GetBTC()[Match2, "24h"]))
 			{
 				StringUpper, Match2, Match2
 				this.SendPRIVMSG(Params[1], "1BTC == " BTC . Match2)
-				AppendChat(Params[1] " " this.Nick " 1BTC == " BTC . Match2)
+				AppendChat(Params[1] " <" this.Nick "> 1BTC == " BTC . Match2)
 			}
 			else if (Match1 = "8")
 			{
 				Random, Rand, 0, 1
 				this.SendPRIVMSG(Params[1], Rand ? "Yes" : "No")
-				AppendChat(Params[1] " " this.Nick " " (Rand ? "Yes" : "No"))
+				AppendChat(Params[1] " <" this.Nick "> " (Rand ? "Yes" : "No"))
 			}
 		}
 	}

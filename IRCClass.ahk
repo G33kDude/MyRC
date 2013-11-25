@@ -152,15 +152,18 @@
 		}
 	}
 	
-	GetMeta(Channel, prefix)
+	GetMeta(Channel, Prefix)
 	{
 		if !this.isIn(Channel)
 			return False
 		
 		Out := []
 		for Nick, Meta in this.Channels[Channel]
-			if (Meta[1] == Prefix)
-				Out.Insert(Nick)
+		{
+			Meta1 := Meta[1]
+			if Meta1 in %Prefix%
+				Out.Insert(Nick,Meta)
+		}
 		return Out
 	}
 	
