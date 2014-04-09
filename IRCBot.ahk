@@ -12,6 +12,7 @@ Gui, +HWNDhWnd +Resize
 Gui, Add, Edit, w1000 h300 ReadOnly vLog HWNDhLog
 Gui, Add, Edit, xm y310 w1000 h299 ReadOnly vChat HWNDhChat
 Gui, Add, ListView, ym x1010 w130 h610 vListView -hdr, Hide
+LV_ModifyCol(1, 130)
 Gui, Add, DropDownList, xm w145 h20 vChannel r20 gDropDown, %IRC_Nick%||
 Gui, Add, Edit, w935 h20 x155 yp vText
 Gui, Add, Button, yp-1 xp940 w45 h22 vSend gSend Default, SEND
@@ -23,9 +24,9 @@ return
 
 GuiSize:
 EditH := Floor((A_GuiHeight-40) / 2)
-EditW := A_GuiWidth - (15 + 130)
+EditW := A_GuiWidth - (15 + 150)
 ChatY := 10 + EditH
-ListViewX := A_GuiWidth - 135
+ListViewX := A_GuiWidth - 155
 ListViewH := A_GuiHeight - 35
 
 BarY := A_GuiHeight - 25
@@ -35,7 +36,7 @@ SendY := BarY - 1
 
 GuiControl, Move, Log, x5 y5 w%EditW% h%EditH%
 GuiControl, Move, Chat, x5 y%ChatY% w%EditW% h%EditH%
-GuiControl, Move, ListView, x%ListViewX% y5 w130 h%ListViewH%
+GuiControl, Move, ListView, x%ListViewX% y5 w150 h%ListViewH%
 GuiControl, Move, Channel, x5 y%BarY% w145 h20
 Guicontrol, Move, Text, x155 y%BarY% w%TextW% h20
 Guicontrol, Move, Send, x%SendX% y%SendY% w45 h22
@@ -73,10 +74,7 @@ if RegexMatch(Text, "^/([^ ]+)(?: (.+))?$", Match)
 	else if (Match1 = "greetings")
 		FileRead, Greetings, Greetings.txt
 	else if (Match1 = "quit")
-	{
 		IRC.SendQUIT(Match2)
-		SetTimer, ExitSub, -3000
-	}
 	else
 		IRC.Log("ERROR: Unkown command " Match1)
 	return
@@ -93,6 +91,11 @@ return
 
 class Bot extends IRC
 {
+	onMODE(Nick,User,Host,Cmd,Params,Msg,Data)
+	{
+		this.UpdateListView()
+	}
+	
 	onJOIN(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
 		if (Nick == this.Nick)
@@ -109,8 +112,7 @@ class Bot extends IRC
 	; RPL_ENDOFMOTD
 	on376(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
-		this.SendJOIN("#maestrith")
-		this.SendJOIN("#Sjc_Bot")
+		this.SendJOIN("#ahkscript")
 	}
 	
 	onPART(Nick,User,Host,Cmd,Params,Msg,Data)
@@ -163,10 +165,12 @@ class Bot extends IRC
 			return
 		
 		LV_Delete()
-		; Hypothetically, @+ could exist
-		for i,v in ["@,@+","+",""]
-			for Nick,Meta in IRC.GetMeta(Channel, v)
-				LV_Add("", Meta[1] . Nick)
+		for Nick,Meta in this.GetMODE(Channel, "o")
+			LV_Add("", this.Prefix.Letters["o"] . Nick)
+		for Nick,Meta in this.GetMODE(Channel, "v -o") ; voiced not opped
+			LV_Add("", this.Prefix.Letters["v"] . Nick)
+		for Nick,Meta in this.GetMODE(Channel, "-ov") ; not opped or voiced
+			LV_Add("", Nick)
 	}
 	
 	onINVITE(Nick,User,Host,Cmd,Params,Msg,Data)
@@ -338,7 +342,7 @@ Search(CSE, Text)
 	Desc := UriDecode(JSON["responseData", "results", 1, "url"])
 	
 	if !(Url && Desc)
-		return
+		return "No results found"
 	
 	return Desc " - " Url
 }
