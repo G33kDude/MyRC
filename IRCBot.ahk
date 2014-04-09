@@ -207,34 +207,32 @@ class Bot extends IRC
 			TrayTip, % this.Nick, % "<" Nick "> " Msg
 		}
 		
-		; if it is a command
+		; If it is a command
 		if (RegexMatch(Msg, "^(?:``|\/)([^ ]+)(?: (.+))?$", Match))
 		{
-			if Match1 in Ahk,Script,Both,Docs,g
-			{
-				Search := Search(Match1, Match2)
-				this.SendPRIVMSG(Params[1], Search)
-				AppendChat(Params[1] " <" this.Nick "> " Search)
-			}
+			if (Match1 = "Help")
+				this.Chat(Params[1], "Help, Forum, Docs, g, More, BTC, 8")
+			if Match1 in Forum,Ahk,Script,Docs,g
+				this.Chat(Params[1], Search(Match1, Match2))
 			else if (Match1 = "More")
-			{
-				Search := Search(Match1, Match2, True)
-				this.SendPRIVMSG(Params[1], Search)
-				AppendChat(Params[1] " <" this.Nick "> " Search)
-			}
+				this.Chat(Params[1], Search(Match1, Match2, True))
 			else if (Match1 = "BTC" && (BTC := GetBTC()[Match2, "24h"]))
 			{
 				StringUpper, Match2, Match2
-				this.SendPRIVMSG(Params[1], "1BTC == " BTC . Match2)
-				AppendChat(Params[1] " <" this.Nick "> 1BTC == " BTC . Match2)
+				this.Chat(Params[1], "1BTC == " BTC . Match2)
 			}
 			else if (Match1 = "8")
 			{
 				Random, Rand, 0, 1
-				this.SendPRIVMSG(Params[1], Rand ? "Yes" : "No")
-				AppendChat(Params[1] " <" this.Nick "> " (Rand ? "Yes" : "No"))
+				this.Chat(Params[1], Rand ? "Yes" : "No")
 			}
 		}
+	}
+	
+	Chat(Channel, Message)
+	{
+		this.SendPRIVMSG(Channel, Message)
+		AppendChat(Channel " <" this.Nick "> " Message)
 	}
 	
 	Log(Text)
