@@ -1,6 +1,7 @@
-﻿#Include lib_json.ahk
-#Include Socket.ahk
+﻿#Include Socket.ahk
 #Include IRCClass.ahk
+#Include Json.ahk
+
 FileRead, Greetings, Greetings.txt
 FileRead, Passwords, %A_Desktop%\IRC.txt
 
@@ -193,7 +194,7 @@ class Bot extends IRC
 		
 		AppendChat(Params[1] " <" Nick "> " Msg)
 		
-		if (RegExMatch(Msg, "i)^("Greetings ").*" this.Nick, Match))
+		if (RegExMatch(Msg, "i)^(("Greetings "),?).*" this.Nick, Match))
 			this.SendPRIVMSG(Params[1], Match1 " " Nick)
 		
 		; If it is being sent to us, but not by us
@@ -212,6 +213,12 @@ class Bot extends IRC
 			if Match1 in Ahk,Script,Both,Docs,g
 			{
 				Search := Search(Match1, Match2)
+				this.SendPRIVMSG(Params[1], Search)
+				AppendChat(Params[1] " <" this.Nick "> " Search)
+			}
+			else if (Match1 = "More")
+			{
+				Search := Search(Match1, Match2, True)
 				this.SendPRIVMSG(Params[1], Search)
 				AppendChat(Params[1] " <" this.Nick "> " Search)
 			}
@@ -280,13 +287,13 @@ GetBTC()
 	; If not, use a dummy to indicate we should fetch new data
 	FileRead, File, LastBTC.txt
 	if File
-		File := Json_From(File)
+		File := Json_ToObj(File)
 	else
 		File := [0,"Error"]
 	
-	
 	LastTime := File[1], Elapsed := A_Now
 	EnvSub, Elapsed, LastTime, Hours
+	
 	; If more than 1 hour has elapsed, or there is no saved last time
 	if (Elapsed || !LastTime)
 	{
@@ -296,14 +303,14 @@ GetBTC()
 		BTC := ComObjCreate("WinHttp.WinHttpRequest.5.1")
 		BTC.Open("GET", API)
 		BTC.Send()
-		BTC := BTC.ResponseText()
+		BTC := BTC.ResponseText
 		
 		; Decode the prices
-		Rates := Json_From(BTC)
+		Rates := Json_ToObj(BTC)
 		
 		; Save the prices to file
 		FileDelete, LastBTC.txt
-		FileAppend, % Json_To([A_Now, Rates]), LastBTC.txt
+		FileAppend, [%A_Now%`, %BTC%], LastBTC.txt
 		
 		ToolTip
 	}
@@ -313,82 +320,71 @@ GetBTC()
 	return Rates
 }
 
-Search(CSE, Text)
-{
+Search(CSE, Text, More=false)
+{ ; Preform a search. Available searches: Forum, Ahk, Script, Docs, g
 	static Base := "https://ajax.googleapis.com/ajax/services/search/web?v=1.0"
+	, json, index := 1
 	
-	if (CSE = "Both")
-		URI := "&cx=017058124035087163209%3A1s6iw9x3kna"
-	else if (CSE = "Ahk")
-		URI := "&cx=017058124035087163209%3Amvadmlmwt3m"
-	else if (CSE = "Script")
-		URI := "&cx=017058124035087163209%3Ag-1wna_xozc"
-	else if (CSE = "Docs")
-		URI := "&cx=017058124035087163209%3Az23pf7b3a3q"
-	else if (CSE = "g")
-		URI := ""
-	else
-		return "Error, not an available search engine"
-	URI .= "&q=" UriEncode(Text)
+	if More
+		Index++
+	Else
+	{
+		if (CSE = "Forum")
+			URI := "&cx=017058124035087163209%3A1s6iw9x3kna"
+		else if (CSE = "Ahk")
+			URI := "&cx=017058124035087163209%3Amvadmlmwt3m"
+		else if (CSE = "Script")
+			URI := "&cx=017058124035087163209%3Ag-1wna_xozc"
+		else if (CSE = "Docs")
+			URI := "&cx=017058124035087163209%3Az23pf7b3a3q"
+		else if (CSE = "g")
+			URI := ""
+		else
+			return "Error, not an available search engine"
+		URI .= "&q=" UriEncode(Text)
+		
+		Google := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+		Google.Open("GET", Base . URI), Google.Send()
+		json := Json_ToObj(Google.ResponseText)
+		Index := 1
+	}
 	
-	Google := ComObjCreate("WinHttp.WinHttpRequest.5.1")
-	Google.Open("GET", Base . URI)
-	Google.Send()
-	Response := Google.ResponseText()
-	
-	JSON := Json_From(Response)
-	
-	Url := UriDecode(JSON["responseData", "results", 1, "titleNoFormatting"])
-	Desc := UriDecode(JSON["responseData", "results", 1, "url"])
+	Desc := json.responseData.results[Index].titleNoFormatting
+	Url := json.responseData.results[Index].url
 	
 	if !(Url && Desc)
 		return "No results found"
 	
-	return Desc " - " Url
+	http:=ComObjCreate("htmlfile"),http.write(Desc)
+	return http.body.innertext " - " Url
 }
 
-; modified from jackieku's code (http://www.autohotkey.com/forum/post-310959.html#310959)
-UriEncode(Uri, Enc = "UTF-8")
+; Modified by GeekDude from http://goo.gl/0a0iJq
+UriEncode(Uri)
 {
-	StrPutVar(Uri, Var, Enc)
+	VarSetCapacity(Var, StrPut(Uri, "UTF-8"), 0), StrPut(Uri, &Var, "UTF-8")
 	f := A_FormatInteger
 	SetFormat, IntegerFast, H
-	Loop
-	{
-		Code := NumGet(Var, A_Index - 1, "UChar")
-		If (!Code)
-			Break
+	While Code := NumGet(Var, A_Index - 1, "UChar")
 		If (Code >= 0x30 && Code <= 0x39 ; 0-9
 			|| Code >= 0x41 && Code <= 0x5A ; A-Z
-			|| Code >= 0x61 && Code <= 0x7A) ; a-z
-			Res .= Chr(Code)
-		Else
-			Res .= "%" . SubStr(Code + 0x100, -1)
-	}
+	|| Code >= 0x61 && Code <= 0x7A) ; a-z
+	Res .= Chr(Code)
+	Else
+		Res .= "%" . SubStr(Code + 0x100, -1)
 	SetFormat, IntegerFast, %f%
 	Return, Res
 }
 
-UriDecode(Uri, Enc = "UTF-8")
+UriDecode(Uri)
 {
 	Pos := 1
-	Loop
+	While Pos := RegExMatch(Uri, "i)(%[\da-f]{2})+", Code, Pos)
 	{
-		Pos := RegExMatch(Uri, "i)(?:%[\da-f]{2})+", Code, Pos++)
-		If (Pos = 0)
-			Break
-		VarSetCapacity(Var, StrLen(Code) // 3, 0)
-		StringTrimLeft, Code, Code, 1
+		VarSetCapacity(Var, StrLen(Code) // 3, 0), Code := SubStr(Code,2)
 		Loop, Parse, Code, `%
-			NumPut("0x" . A_LoopField, Var, A_Index - 1, "UChar")
-		StringReplace, Uri, Uri, `%%Code%, % StrGet(&Var, Enc), All
+			NumPut("0x" A_LoopField, Var, A_Index-1, "UChar")
+		StringReplace, Uri, Uri, `%%Code%, % StrGet(&Var, "UTF-8"), All
 	}
 	Return, Uri
-}
-
-StrPutVar(Str, ByRef Var, Enc = "")
-{
-	Len := StrPut(Str, Enc) * (Enc = "UTF-16" || Enc = "CP1200" ? 2 : 1)
-	VarSetCapacity(Var, Len, 0)
-	Return, StrPut(Str, &Var, Enc)
 }

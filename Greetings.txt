@@ -1,1 +1,1 @@
-Ahoy|G\'?day|Good evening|Good morning|Good afternoon|Greetings|Hello|Hello there|Hey|Hi|Hi there|How are you|Howdy|How(\'?s| is) it going?|How(\'?s| is) it hanging?|Salutations|Sup|Wazzup|Welcome|What\'?s up|Yo|Bonjour|Hola
+﻿Ahoy|Aloha|G\'?day|Good evening|Good morning|Good afternoon|Greetings|Hello|Hello there|Hey|Hi|Hi there|How are you|Howdy|How(\'?s| is) it going?|How(\'?s| is) it hanging?|Salutations|Sup|Wazzup|Welcome|What\'?s up|Yo|Bonjour|Hola
