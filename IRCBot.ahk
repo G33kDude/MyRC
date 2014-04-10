@@ -354,7 +354,7 @@ Search(CSE, Text, More=false)
 		return "No results found"
 	
 	http:=ComObjCreate("htmlfile"),http.write(Desc)
-	return http.body.innertext " - " Url
+	return http.body.innertext " - " UriDecode(Url)
 }
 
 ; Modified by GeekDude from http://goo.gl/0a0iJq
