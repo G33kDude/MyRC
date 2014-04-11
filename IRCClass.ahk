@@ -50,7 +50,7 @@
 				continue
 			
 			; :Nick!User@Host Command Parameter Parameter Parameter :Message
-			if (!RegExMatch(Value, "^(?:\:([^\!\@ ]*)(?:(?:\!([^\@]*))?\@([^ ]*))? )?([^ ]+)(?: ([^ ]+(?: [^ ]+)*?))??(?: \:(.*))?$", Match))
+			if (!RegExMatch(Value, "^(?:\:([^\!\@ ]*)(?:(?:\!([^\@]*))?\@([^ ]*))? )?([^ ]+)(?: ([^ ]+(?: [^ ]+)*?))??(?: \:(.*?))?\s*$", Match))
 			{
 				this.Log("Malformed message recieved:" Value)
 				continue
@@ -85,10 +85,11 @@
 	
 	_onJOIN(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
+		Channel := Params[1] ? Params[1] : Msg
 		if (Nick == this.Nick)
-			this.Channels.Insert(Params[1], [])
+			this.Channels.Insert(Channel, [])
 		else
-			this.Channels[Params[1]].Insert(Nick, {"MODE":[]})
+			this.Channels[Channel].Insert(Nick, {"MODE":[]})
 	}
 	
 	_onPART(Nick,User,Host,Cmd,Params,Msg,Data)
