@@ -20,7 +20,7 @@ Gui, Add, Button, yp-1 xp940 w45 h22 vSend gSend Default, SEND
 Gui, Show
 
 IRC := new Bot()
-IRC.Connect("irc.freenode.net", 6667, IRC_Nick, IRC_Nick, IRC_Nick, Passwords)
+IRC.Connect("chat.freenode.net", 6667, IRC_Nick, IRC_Nick, IRC_Nick, Passwords)
 return
 
 GuiSize:
@@ -81,6 +81,7 @@ if RegexMatch(Text, "^/([^ ]+)(?: (.+))?$", Match)
 	return
 }
 
+; Send chat and handle it
 IRC.SendPRIVMSG(Channel, Text)
 IRC.onPRIVMSG(IRC.Nick,IRC.User,"","PRIVMSG",[Channel],Text,":" IRC.Nick "!" IRC.User "@" IRC.Host " PRIVMSG " Channel " :" Text)
 return
@@ -211,8 +212,12 @@ class Bot extends IRC
 		if (RegexMatch(Msg, "^(?:``|\/)([^ ]+)(?: (.+))?$", Match))
 		{
 			if (Match1 = "Help")
-				this.Chat(Params[1], "Help, Forum, Docs, g, More, BTC, 8")
-			if Match1 in Forum,Ahk,Script,Docs,g
+				this.Chat(Params[1], "Help, Forum, Docs, g, More, BTC, 8, NewPost, NewNique")
+			else if (Match1 = "NewPost")
+				this.Chat(Params[1], NewPosts(Match2))
+			else if (Match1 = "NewNique")
+				this.Chat(Params[1], NewNique(Match2))
+			Else if Match1 in Forum,Ahk,Script,Docs,g
 				this.Chat(Params[1], Search(Match1, Match2))
 			else if (Match1 = "More")
 				this.Chat(Params[1], Search(Match1, Match2, True))
@@ -353,8 +358,7 @@ Search(CSE, Text, More=false)
 	if !(Url && Desc)
 		return "No results found"
 	
-	http:=ComObjCreate("htmlfile"),http.write(Desc)
-	return http.body.innertext " - " UriDecode(Url)
+	return htmlDecode(Desc) " - " UriDecode(Url)
 }
 
 ; Modified by GeekDude from http://goo.gl/0a0iJq
@@ -385,4 +389,82 @@ UriDecode(Uri)
 		StringReplace, Uri, Uri, `%%Code%, % StrGet(&Var, "UTF-8"), All
 	}
 	Return, Uri
+}
+
+HtmlDecode(Text)
+{
+	static html := ComObjCreate("htmlfile")
+	html.open(), html.write(Text)
+	return html.body.innerText
+}
+
+GetPosts(Fresh=False)
+{
+	static Out, TickCount := 0
+	, UA := "Mozilla/5.0 (X11; Linux x86_64;"
+	. " rv:12.0) Gecko/20100101 Firefox/21.0"
+	
+	if (Fresh || A_TickCount-TickCount > 2*60*1000)
+	{
+		http := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+		http.Open("GET", "http://ahkscript.org/boards/feed.php", True)
+		http.setRequestHeader("User-Agent", UA)
+		http.Send()
+		
+		ComObjError(False)
+		While !Rss := http.responseText
+			Sleep, 50
+		ComObjError(True)
+		
+		xml:=ComObjCreate("MSXML2.DOMDocument")
+		xml.loadXML(Rss)
+		
+		if !entries := xml.selectnodes("/feed/entry")
+			return "Error"
+		
+		Out := []
+		While entry := entries.item[A_Index-1]
+		{
+			Title := HtmlDecode(entry.selectSingleNode("title").text)
+			Author := entry.selectSingleNode("author/name").text
+			Url := entry.selectSingleNode("link/@href").text
+			Out.Insert({"Author":Author, "Title":Title, "Url":Url})
+		}
+		
+		TickCount := A_TickCount
+	}
+	return Out
+}
+
+NewPosts(Max="")
+{
+	if ((Posts:=GetPosts(!!Max)) == "Error")
+		return "Error"
+	if !Max
+		Max := 4
+	for each, Post in Posts
+	{
+		if (A_Index > Max)
+			Break
+		Out .= Post.Author " - " Post.Title " - " Post.Url "`r`n"
+	}
+	return Out
+}
+
+NewNique(Max="")
+{
+	if ((Posts:=GetPosts(!!Max)) == "Error")
+		return "Error"
+	if !Max
+		Max := 4
+	i := 0
+	for each, Post in Posts
+	{
+		if InStr(Post.Title, " • Re: ")
+			continue
+		if (++i >= Max)
+			Break
+		Out .= Post.Author " - " Post.Title " - " Post.Url "`r`n"
+	}
+	return Out
 }

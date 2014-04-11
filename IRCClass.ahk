@@ -278,7 +278,18 @@
 	
 	SendPRIVMSG(Channel, Text)
 	{
-		return this.SendText("PRIVMSG " Channel " :" Text)
+		Header := "PRIVMSG " Channel " :"
+		Max := 510 - StrLen(Header)
+		Loop, Parse, Text, `n, `r
+		{
+			if !Text := A_LoopField
+				Continue
+			Loop
+			{
+				this.SendText(Header . SubStr(Text, 1, Max))
+				Text := SubStr(Text, Max+1)
+			} Until !Text
+		}
 	}
 	
 	SendJOIN(Channel)
@@ -306,4 +317,3 @@
 		return this.SendText("NOTICE " User " :" Text)
 	}
 }
-
