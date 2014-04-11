@@ -74,7 +74,8 @@
 			this.Nick := Msg
 		
 		for Channel, NickList in this.Channels
-			NickList[Msg] := NickList[Nick], NickList.Remove(Nick)
+			if NickList[Nick]
+				NickList[Msg] := NickList[Nick], NickList.Remove(Nick)
 	}
 	
 	_onPING(Nick,User,Host,Cmd,Params,Msg,Data)
