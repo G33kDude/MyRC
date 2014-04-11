@@ -106,9 +106,16 @@ class Bot extends IRC
 		this.UpdateListView()
 	}
 	
+	; RPL_ENDOFNAMES
 	on366(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
 		this.UpdateListView()
+	}
+	
+	; ERR_NOMOTD
+	on422(p*)
+	{
+		this.on376(p*)
 	}
 	
 	; RPL_ENDOFMOTD

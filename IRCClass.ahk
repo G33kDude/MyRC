@@ -29,7 +29,7 @@
 	_HandleRecvProxy(Skt, Parent="")
 	{
 		static _Parent
-		if (parent)
+		if (Parent)
 			return _Parent := Parent
 		return _Parent._HandleRecv(Skt)
 	}
@@ -40,7 +40,6 @@
 		
 		Data .= Skt.RecvText()
 		
-		; Data := (DatArray:=StrSplit(Data,"`r`n")).Remove(DatArray.MaxIndex())
 		DatArray := StrSplit(Data, "`r`n")
 		Data := DatArray.Remove(DatArray.MaxIndex())
 		
@@ -123,33 +122,27 @@
 		}
 	}
 	
+	; RPL_ENDOFMOTD
 	_on376(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
-		this.SendText("WHO " this.Nick " %uh")
+		this.SendText("WHOIS " this.Nick)
 	}
 	
-	;:ChanServ!ChanServ@services. MODE #maestrith +o GeekDude
 	_onMODE(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
-		; MsgBox, ALERT!
-		this.log("MODE DETECTED")
 		if (Params[1] == this.Nick)
-			return (False, this.log("USER MODE"))
-		this.log("CHANNEL MODE")
+			return False ; Return and call user function
 		plus := true, i := 2, MODE := Params[2]
 		Loop, Parse, MODE
 		{
-			this.log(A_LoopField)
 			if (A_Loopfield == "+")
 				plus := True
 			else if (A_LoopField == "-")
 				plus := False
 			else
 			{
-				this.log("Plus: " Plus)
 				i++
-				this.log("i: " i)
-				if (Plus)
+				if Plus
 					this.Channels[Params[1], Params[i], "MODE"].Insert(A_LoopField, true)
 				else
 					this.Channels[Params[1], Params[i], "MODE"].Remove(A_LoopField)
@@ -157,15 +150,17 @@
 		}
 	}
 	
-	_on354(Nick,User,Host,Cmd,Params,Msg,Data)
+	; RPL_WHOISUSER
+	_on311(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
-		if (Params[1] == this.Nick)
+		if (Params[2] == this.Nick)
 		{
-			this.User := Params[2]
-			this.Host := Params[3]
+			this.User := Params[3]
+			this.Host := Params[4]
 		}
 	}
 	
+	;RPL_NAMREPLY
 	_on353(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
 		Channel := this.Channels[Params[3]]
@@ -191,6 +186,7 @@
 		}
 	}
 	
+	; RPL_ISUPPORT
 	_on005(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
 		for i,Param in Params
@@ -280,7 +276,8 @@
 	SendPRIVMSG(Channel, Text)
 	{
 		Header := "PRIVMSG " Channel " :"
-		Max := 510 - StrLen(Header)
+		RecvHeader := ":" this.Nick "!" this.User "@" this.Host " " Header
+		Max := 510 - StrLen(RecvHeader)
 		Loop, Parse, Text, `n, `r
 		{
 			if !Text := A_LoopField
