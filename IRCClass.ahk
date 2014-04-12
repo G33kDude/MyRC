@@ -8,6 +8,8 @@
 		this.TCP := new SocketTCP()
 		this._HandleRecvProxy("",this)
 		this.TCP.onRecv := this._HandleRecvProxy
+		
+		return this
 	}
 	
 	Connect(Server, Port, Nick, User="", Name="", Pass="")
@@ -123,10 +125,18 @@
 		}
 	}
 	
+	; ERR_NOMOTD
+	_on422(p*)
+	{
+		this._on376(p*)
+	}
+	
 	; RPL_ENDOFMOTD
 	_on376(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
+		this.CanJoin := true
 		this.SendText("WHOIS " this.Nick)
+		this.SendJOIN()
 	}
 	
 	_onMODE(Nick,User,Host,Cmd,Params,Msg,Data)
@@ -291,9 +301,16 @@
 		}
 	}
 	
-	SendJOIN(Channel)
+	CanJoin := false
+	ChannelBuffer := []
+	SendJOIN(Channels*)
 	{
-		return this.SendText("JOIN " Channel)
+		for each, Channel in Channels
+			this.ChannelBuffer.Insert(Channel)
+		if !this.CanJoin
+			return
+		for each, Channel in this.ChannelBuffer
+			this.SendText("JOIN " Channel)
 	}
 	
 	SendPART(Channel,Message="")

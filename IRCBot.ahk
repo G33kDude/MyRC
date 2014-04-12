@@ -2,10 +2,31 @@
 #Include IRCClass.ahk
 #Include Json.ahk
 
-FileRead, Greetings, Greetings.txt
-FileRead, Passwords, %A_Desktop%\IRC.txt
+SettingsFile := A_ScriptDir "\Settings.ini"
 
-IRC_Nick := "GeekBot"
+if !(Settings := Ini_Read(SettingsFile))
+{
+	Settings =
+	( LTrim
+	Greetings = Hey|Hi|Hello
+	[Server]
+	Addr = chat.freenode.net
+	Port = 6667
+	Nick = MyRC_Bot
+	User = MyRC
+	Channels = #ahkscript
+	)
+	
+	File := FileOpen(SettingsFile, "w")
+	File.Write(Settings), File.Close()
+	
+	Settings := Ini_Read(SettingsFile)
+}
+
+Server := Settings.Server
+
+if (Settings.Bitly)
+	Shorten(Settings.Bitly.login, Settings.Bitly.apiKey)
 
 Gui, Margin, 5, 5
 Gui, Font, s9, Lucida Console
@@ -19,8 +40,12 @@ Gui, Add, Edit, w935 h20 x155 yp vText
 Gui, Add, Button, yp-1 xp940 w45 h22 vSend gSend Default, SEND
 Gui, Show
 
-IRC := new Bot()
-IRC.Connect("chat.freenode.net", 6667, IRC_Nick, IRC_Nick, IRC_Nick, Passwords)
+AppendLog("Getting new posts")
+GetPosts(True)
+
+IRC := new Bot(Settings.Greetings, Server)
+IRC.Connect(Server.Addr, Server.Port, Server.Nick, Server.User, Server.Nick, Server.Pass)
+IRC.SendJOIN(StrSplit(Server.Channels, ",")*)
 return
 
 GuiSize:
@@ -72,8 +97,6 @@ if RegexMatch(Text, "^/([^ ]+)(?: (.+))?$", Match)
 		IRC.SendText(Match2)
 	else if (Match1 = "nick")
 		IRC.SendNICK(Match2)
-	else if (Match1 = "greetings")
-		FileRead, Greetings, Greetings.txt
 	else if (Match1 = "quit")
 		IRC.SendQUIT(Match2)
 	else
@@ -93,6 +116,12 @@ return
 
 class Bot extends IRC
 {
+	__New(Greetings)
+	{
+		this.Greetings := Greetings
+		return base.__New()
+	}
+	
 	onMODE(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
 		this.UpdateListView()
@@ -110,18 +139,6 @@ class Bot extends IRC
 	on366(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
 		this.UpdateListView()
-	}
-	
-	; ERR_NOMOTD
-	on422(p*)
-	{
-		this.on376(p*)
-	}
-	
-	; RPL_ENDOFMOTD
-	on376(Nick,User,Host,Cmd,Params,Msg,Data)
-	{
-		this.SendJOIN("#ahkscript")
 	}
 	
 	onPART(Nick,User,Host,Cmd,Params,Msg,Data)
@@ -198,11 +215,10 @@ class Bot extends IRC
 	
 	onPRIVMSG(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
-		global Greetings
-		
 		AppendChat(Params[1] " <" Nick "> " Msg)
 		
-		if (RegExMatch(Msg, "i)^(("Greetings "),?).*" this.Nick, Match))
+		; Greetings
+		if (RegExMatch(Msg, "i)^((" this.Greetings "),?).*" this.Nick, Match))
 			this.SendPRIVMSG(Params[1], Match1 " " Nick)
 		
 		; If it is being sent to us, but not by us
@@ -216,7 +232,7 @@ class Bot extends IRC
 		}
 		
 		; If it is a command
-		if (RegexMatch(Msg, "^(?:``|\/)([^ ]+)(?: (.+))?$", Match))
+		if (RegexMatch(Msg, "^``([^ ]+)(?: (.+))?$", Match))
 		{
 			if (Match1 = "Help")
 				this.Chat(Params[1], "Help, Forum, Docs, g, More, BTC, 8, NewPost, NewNique")
@@ -224,6 +240,8 @@ class Bot extends IRC
 				this.Chat(Params[1], NewPosts(Match2))
 			else if (Match1 = "NewNique")
 				this.Chat(Params[1], NewNique(Match2))
+			else if (Match1 = "Shorten")
+				this.Chat(Params[1], Shorten(Match2))
 			Else if Match1 in Forum,Ahk,Script,Docs,g
 				this.Chat(Params[1], Search(Match1, Match2))
 			else if (Match1 = "More")
@@ -365,7 +383,7 @@ Search(CSE, Text, More=false)
 	if !(Url && Desc)
 		return "No results found"
 	
-	return htmlDecode(Desc) " - " UriDecode(Url)
+	return htmlDecode(Desc) " - " Shorten(UriDecode(Url))
 }
 
 ; Modified by GeekDude from http://goo.gl/0a0iJq
@@ -407,48 +425,69 @@ HtmlDecode(Text)
 
 GetPosts(Fresh=False)
 {
-	static Out, TickCount := 0
-	, UA := "Mozilla/5.0 (X11; Linux x86_64;"
-	. " rv:12.0) Gecko/20100101 Firefox/21.0"
+	static Out := [0], UA := "Mozilla/5.0 (X11; Linux"
+	. " x86_64; rv:12.0) Gecko/20100101 Firefox/21.0"
+	, Feed := "http://ahkscript.org/boards/feed.php"
 	
-	if (Fresh || A_TickCount-TickCount > 2*60*1000)
+	if Fresh
 	{
 		http := ComObjCreate("WinHttp.WinHttpRequest.5.1")
-		http.Open("GET", "http://ahkscript.org/boards/feed.php", True)
+		http.Open("GET", Feed, True) ; Async
 		http.setRequestHeader("User-Agent", UA)
 		http.Send()
 		
-		ComObjError(False)
-		While !Rss := http.responseText
-			Sleep, 50
-		ComObjError(True)
+		; Wait for data or timeout
+		TickCount := A_TickCount
+		While A_TickCount - TickCount < 30 * 1000 ; 30 seconds
+			Try ; If it errors, the data has not been recieved yet
+				Rss := http.responseText, TickCount := 0
+		if !Rss
+			return "Error: Server timeout"
 		
+		; Load XML
 		xml:=ComObjCreate("MSXML2.DOMDocument")
 		xml.loadXML(Rss)
-		
 		if !entries := xml.selectnodes("/feed/entry")
-			return "Error"
+			return "Error: Malformed XML"
 		
-		Out := []
+		; Read entries
+		Out := [A_TickCount]
 		While entry := entries.item[A_Index-1]
 		{
 			Title := HtmlDecode(entry.selectSingleNode("title").text)
 			Author := entry.selectSingleNode("author/name").text
-			Url := entry.selectSingleNode("link/@href").text
+			Url := Shorten(entry.selectSingleNode("link/@href").text)
 			Out.Insert({"Author":Author, "Title":Title, "Url":Url})
 		}
-		
-		TickCount := A_TickCount
 	}
-	return Out
+	Else if (A_TickCount - Out[1] > 1 * 60 * 1000) ; 1 minute
+		SetTimer, RefreshPosts, -100
+	
+	return Out.Clone()
 }
 
-NewPosts(Max="")
+RefreshPosts:
+GetPosts(True)
+return
+
+NewPosts(Max=4)
 {
-	if ((Posts:=GetPosts(!!Max)) == "Error")
-		return "Error"
-	if !Max
+	if Max is not Number
 		Max := 4
+	
+	if (Max < 0)
+		Fresh := true, Max := Abs(Max)
+	Else
+		Fresh := false
+	
+	Posts := GetPosts(Fresh)
+	if !IsObject(Posts)
+		return "Error"
+	
+	Out :=  "Information is "
+	. ((A_TickCount - Posts.Remove(1)) // 1000)
+	. " seconds old`r`n"
+	
 	for each, Post in Posts
 	{
 		if (A_Index > Max)
@@ -458,12 +497,24 @@ NewPosts(Max="")
 	return Out
 }
 
-NewNique(Max="")
+NewNique(Max=4)
 {
-	if ((Posts:=GetPosts(!!Max)) == "Error")
-		return "Error"
-	if !Max
+	if Max is not Number
 		Max := 4
+	
+	if (Max < 0)
+		Fresh := true, Max := Abs(Max)
+	Else
+		Fresh := false
+	
+	Posts := GetPosts(Fresh)
+	if !IsObject(Posts)
+		return Posts
+	
+	Out :=  "Information is "
+	. ((A_TickCount - Posts.Remove(1)) // 1000)
+	. " seconds old`r`n"
+	
 	i := 0
 	for each, Post in Posts
 	{
@@ -472,6 +523,66 @@ NewNique(Max="")
 		if (++i >= Max)
 			Break
 		Out .= Post.Author " - " Post.Title " - " Post.Url "`r`n"
+	}
+	return Out
+}
+
+Shorten(LongUrl, SetKey="")
+{
+	static Shortened := {"http://www.autohotkey.net/": "http://ahk.me/sqTsfk"
+	, "http://www.autohotkey.com/": "http://ahk.me/sDikbQ"
+	, "http://www.autohotkey.com/forum/": "http://ahk.me/rJiLHk"
+	, "http://www.autohotkey.com/docs/Tutorial.htm": "http://ahk.me/uKJ4oh"
+	, "http://github.com/polyethene/robokins": "http://git.io/robo"
+	, "http://ahkscript.org/": "http://ahk4.me/QMmuVo"}
+	, http := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+	, Base := "http://api.bitly.com/v3/shorten"
+	, login, apiKey
+	
+	if SetKey
+	{
+		apiKey := SetKey
+		login := LongUrl
+		return
+	}
+	
+	if (Shortened.HasKey(LongUrl))
+		return Shortened[LongUrl]
+	
+	if !(login && apiKey)
+		return LongUrl
+	
+	Url := Base
+	. "?login=" login
+	. "&apiKey=" apiKey
+	. "&longUrl=" UriEncode(Trim(LongUrl, " `r`n`t"))
+	. "&format=txt"
+	
+	http.Open("GET", Url), http.Send()
+	ShortUrl := http.responseText
+	Shortened.Insert(LongUrl, ShortUrl)
+	
+	return ShortUrl
+}
+
+Ini_Read(FileName)
+{
+	FileRead, File, %FileName%
+	return File ? Ini_Reads(File) : ""
+}
+
+Ini_Reads(FileName)
+{
+	static RegEx := "^\s*(?:`;.*|(.*?)(?:\s+`;.*)?)\s*$"
+	Section := Out := []
+	Loop, Parse, FileName, `n, `r
+	{
+		if !(RegExMatch(A_LoopField, RegEx, Match) && Line := Match1)
+			Continue
+		if RegExMatch(Line, "\[(.+)\]", Match)
+			Out.Insert(Match1, Section := [])
+		else if RegExMatch(Line, "^(.+?)\s*=\s*(.+)$", Match)
+			Section.Insert(Match1, Match2)
 	}
 	return Out
 }
