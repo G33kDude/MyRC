@@ -40,9 +40,6 @@ Gui, Add, Edit, w935 h20 x155 yp vText
 Gui, Add, Button, yp-1 xp940 w45 h22 vSend gSend Default, SEND
 Gui, Show
 
-AppendLog("Getting new posts")
-GetPosts(True)
-
 IRC := new Bot(Settings.Greetings, Server)
 IRC.Connect(Server.Addr, Server.Port, Server.Nick, Server.User, Server.Nick, Server.Pass)
 IRC.SendJOIN(StrSplit(Server.Channels, ",")*)
@@ -262,7 +259,9 @@ class Bot extends IRC
 	Chat(Channel, Message)
 	{
 		this.SendPRIVMSG(Channel, Message)
-		AppendChat(Channel " <" this.Nick "> " Message)
+		Loop, Parse, Message, `n, `r
+			if A_LoopField
+				AppendChat(Channel " <" this.Nick "> " A_LoopField)
 	}
 	
 	Log(Text)
@@ -349,7 +348,7 @@ GetBTC()
 }
 
 Search(CSE, Text, More=false)
-{ ; Preform a search. Available searches: Forum, Ahk, Script, Docs, g
+{ ; Perform a search. Available searches: Forum, Ahk, Script, Docs, g
 	static Base := "https://ajax.googleapis.com/ajax/services/search/web?v=1.0"
 	, json, index := 1
 	
@@ -423,13 +422,13 @@ HtmlDecode(Text)
 	return html.body.innerText
 }
 
-GetPosts(Fresh=False)
+GetPosts(Max = 4)
 {
-	static Out := [0], UA := "Mozilla/5.0 (X11; Linux"
+	static Posts := [0], UA := "Mozilla/5.0 (X11; Linux"
 	. " x86_64; rv:12.0) Gecko/20100101 Firefox/21.0"
 	, Feed := "http://ahkscript.org/boards/feed.php"
 	
-	if Fresh
+	if (A_TickCount - Posts[1] > 1 * 60 * 1000 || Max < 0) ; 1 minute
 	{
 		http := ComObjCreate("WinHttp.WinHttpRequest.5.1")
 		http.Open("GET", Feed, True) ; Async
@@ -438,7 +437,7 @@ GetPosts(Fresh=False)
 		
 		; Wait for data or timeout
 		TickCount := A_TickCount
-		While A_TickCount - TickCount < 30 * 1000 ; 30 seconds
+		While A_TickCount - TickCount < 10 * 1000 ; 10 seconds
 			Try ; If it errors, the data has not been recieved yet
 				Rss := http.responseText, TickCount := 0
 		if !Rss
@@ -451,80 +450,65 @@ GetPosts(Fresh=False)
 			return "Error: Malformed XML"
 		
 		; Read entries
-		Out := [A_TickCount]
+		Posts := [A_TickCount]
 		While entry := entries.item[A_Index-1]
 		{
 			Title := HtmlDecode(entry.selectSingleNode("title").text)
 			Author := entry.selectSingleNode("author/name").text
 			Url := Shorten(entry.selectSingleNode("link/@href").text)
-			Out.Insert({"Author":Author, "Title":Title, "Url":Url})
+			Posts.Insert({"Author":Author, "Title":Title, "Url":Url})
 		}
 	}
-	Else if (A_TickCount - Out[1] > 1 * 60 * 1000) ; 1 minute
-		SetTimer, RefreshPosts, -100
 	
-	return Out.Clone()
+	Out := Posts.Clone()
+	Out.Remove(Abs(Max)+2, 17) ; The key after the last one we want, and +1 because of timestamp
+	
+	return Out
 }
-
-RefreshPosts:
-GetPosts(True)
-return
 
 NewPosts(Max=4)
 {
-	if Max is not Number
+	Max := Floor(Max)
+	if (Max < -7 || Max > 7 || !Max)
 		Max := 4
 	
-	if (Max < 0)
-		Fresh := true, Max := Abs(Max)
-	Else
-		Fresh := false
-	
-	Posts := GetPosts(Fresh)
+	Posts := GetPosts(Max)
 	if !IsObject(Posts)
-		return "Error"
+		return Posts
 	
-	Out :=  "Information is "
-	. ((A_TickCount - Posts.Remove(1)) // 1000)
-	. " seconds old`r`n"
+	if (Cached := (A_TickCount-Posts.Remove(1)) // 1000)
+		Out := "Information is " Cached " seconds old (use negative to force refresh)`n"
 	
 	for each, Post in Posts
-	{
-		if (A_Index > Max)
-			Break
-		Out .= Post.Author " - " Post.Title " - " Post.Url "`r`n"
-	}
+		Out .= Post.Author " - " Post.Title " - " Post.Url "`n"
+	
 	return Out
 }
 
 NewNique(Max=4)
 {
-	if Max is not Number
+	Max := Floor(Max)
+	if (Max < -7 || Max > 7 || !Max)
 		Max := 4
 	
-	if (Max < 0)
-		Fresh := true, Max := Abs(Max)
-	Else
-		Fresh := false
-	
-	Posts := GetPosts(Fresh)
+	Posts := GetPosts(Max > 0 ? 16 : -16)
 	if !IsObject(Posts)
 		return Posts
 	
-	Out :=  "Information is "
-	. ((A_TickCount - Posts.Remove(1)) // 1000)
-	. " seconds old`r`n"
+	if (Cached := (A_TickCount-Posts.Remove(1)) // 1000)
+		Out := "Information is " Cached " seconds old (use negative to force refresh)`n"
 	
-	i := 0
+	Max := Abs(Max), i := 0
 	for each, Post in Posts
 	{
 		if InStr(Post.Title, " • Re: ")
 			continue
 		if (++i >= Max)
 			Break
-		Out .= Post.Author " - " Post.Title " - " Post.Url "`r`n"
+		Out .= Post.Author " - " Post.Title " - " Post.Url "`n"
 	}
-	return Out
+	
+	return Out ? Out : "No new posts"
 }
 
 Shorten(LongUrl, SetKey="")
@@ -559,7 +543,7 @@ Shorten(LongUrl, SetKey="")
 	. "&format=txt"
 	
 	http.Open("GET", Url), http.Send()
-	ShortUrl := http.responseText
+	ShortUrl := Trim(http.responseText, " `r`n`t")
 	Shortened.Insert(LongUrl, ShortUrl)
 	
 	return ShortUrl
