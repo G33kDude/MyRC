@@ -78,7 +78,7 @@ GuiControlGet, Channel
 if RegexMatch(Text, "^/([^ ]+)(?: (.+))?$", Match)
 {
 	if (Match1 = "join")
-		IRC.SendText("JOIN " Match2)
+		IRC._SendRAW("JOIN " Match2)
 	else if (Match1 = "me")
 	{
 		IRC.SendACTION(Channel, Match2)
@@ -258,10 +258,9 @@ class Bot extends IRC
 	
 	Chat(Channel, Message)
 	{
-		this.SendPRIVMSG(Channel, Message)
-		Loop, Parse, Message, `n, `r
-			if A_LoopField
-				AppendChat(Channel " <" this.Nick "> " A_LoopField)
+		Messages := this.SendPRIVMSG(Channel, Message)
+		for each, Message in Messages
+			AppendChat(Channel " <" this.Nick "> " Message)
 	}
 	
 	Log(Text)

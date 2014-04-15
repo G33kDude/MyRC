@@ -21,9 +21,9 @@
 		this.TCP.Connect(Server, Port)
 		
 		if Pass
-			this.SendText("PASS " Pass)
-		this.SendText("NICK " this.Nick)
-		this.SendText("USER " this.User " 0 * :" this.Name)
+			this._SendRaw("PASS " Pass)
+		this._SendRaw("NICK " this.Nick)
+		this._SendRaw("USER " this.User " 0 * :" this.Name)
 	}
 	
 	; Calls _HandleRecv in the right context.
@@ -82,7 +82,7 @@
 	
 	_onPING(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
-		this.SendText("PONG :" Msg)
+		this._SendRaw("PONG :" Msg)
 	}
 	
 	_onJOIN(Nick,User,Host,Cmd,Params,Msg,Data)
@@ -135,7 +135,7 @@
 	_on376(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
 		this.CanJoin := true
-		this.SendText("WHOIS " this.Nick)
+		this._SendRaw("WHOIS " this.Nick)
 		this.SendJOIN()
 	}
 	
@@ -255,13 +255,37 @@
 		return Out
 	}
 	
-	SendText(msg, encoding="UTF-8")
+	_SendRaw(Message, RecvPrefix="", Prefix="", Suffix="", Encoding="UTF-8")
 	{
-		msg .= "`r`n"
-		this.Log(msg)
-		VarSetCapacity(buffer, length := (StrPut(msg, encoding)*(((encoding="utf-16")||(encoding="cp1200")) ? 2 : 1)))
-		StrPut(msg, &buffer, encoding)
-		return this.TCP.send(&buffer, length-1)
+		Max := 510 - StrPut(RecvPrefix, Encoding) - StrPut(Suffix, Encoding)
+		Out := []
+		Loop, Parse, Message, `n, `r
+		{
+			for each, Split in this._ByteSplit(A_LoopField, Max)
+			{
+				Msg := Prefix . Split . Suffix "`r`n"
+				Out.Insert(Split)
+				this._SendTCP(Msg, Encoding)
+			}
+		}
+		return Out
+	}
+	
+	_SendTCP(Message, Encoding="UTF-8", Null=false)
+	{
+		Messages := this._ByteSplit(Message, 512)
+		if Messages.MaxIndex() > 1
+		{
+			this.Log(Message)
+			this.Log("Message too long, trimming")
+		}
+		Message := Messages[1]
+		this.Log(Message)
+		
+		Length := StrPut(Message, Encoding)
+		VarSetCapacity(Buffer, Length)
+		StrPut(Message, &Buffer, Encoding)
+		return this.TCP.send(&Buffer, Length - !Null)
 	}
 	
 	IsIn(Channel)
@@ -271,12 +295,12 @@
 	
 	SendCTCP(Nick, Command, Text)
 	{
-		return this.SendPRIVMSG(Nick, Chr(1) . Command " " Text . Chr(1))
+		return this.SendPRIVMSG(Nick, Text, Chr(1) . Command " ", Chr(1))
 	}
 	
 	SendCTCPReply(Nick, Command, Text)
 	{
-		return this.SendNOTICE(Nick, Chr(1) . Command " " Text . Chr(1))
+		return this.SendNOTICE(Nick, Text, Chr(1) . Command " ", Chr(1))
 	}
 	
 	SendACTION(Channel, Text)
@@ -284,21 +308,11 @@
 		return this.SendCTCP(Channel, "ACTION", Text)
 	}
 	
-	SendPRIVMSG(Channel, Text)
+	SendPRIVMSG(Channel, Text, Prefix="", Suffix="")
 	{
-		Header := "PRIVMSG " Channel " :"
+		Header := "PRIVMSG " Channel " :" Prefix
 		RecvHeader := ":" this.Nick "!" this.User "@" this.Host " " Header
-		Max := 510 - StrLen(RecvHeader)
-		Loop, Parse, Text, `n, `r
-		{
-			if !Text := A_LoopField
-				Continue
-			Loop
-			{
-				this.SendText(Header . SubStr(Text, 1, Max))
-				Text := SubStr(Text, Max+1)
-			} Until !Text
-		}
+		return this._SendRaw(Text, RecvHeader, Header, Suffix)
 	}
 	
 	CanJoin := false
@@ -310,26 +324,41 @@
 		if !this.CanJoin
 			return
 		for each, Channel in this.ChannelBuffer
-			this.SendText("JOIN " Channel)
+			this._SendRaw("JOIN " Channel)
 	}
 	
 	SendPART(Channel,Message="")
 	{
-		return this.SendText("PART " Channel (Message ? " :" Message : ""))
+		return this._SendRaw("PART " Channel (Message ? " :" Message : ""))
 	}
 	
 	SendNICK(NewNick)
 	{
-		return this.SendText("NICK " NewNick)
+		return this._SendRaw("NICK " NewNick)
 	}
 	
 	SendQUIT(Message="")
 	{
-		return this.SendText("QUIT" (Message ? " :" Message : ""))
+		return this._SendRaw("QUIT" (Message ? " :" Message : ""))
 	}
 	
-	SendNOTICE(User, Text)
+	SendNOTICE(User, Message, Prefix="", Suffix="")
 	{
-		return this.SendText("NOTICE " User " :" Text)
+		Header := "NOTICE " User " :" Prefix
+		RecvHeader := ":" this.Nick "!" this.User "@" this.Host " " Header
+		return this._SendRaw(Message, RecvHeader, Header, Suffix)
+	}
+	
+	_ByteSplit(String, Bytes, encoding="UTF-8")
+	{
+		Out := []
+		while String
+		{
+			VarSetCapacity(x, Bytes, 0)
+			StrPut(String, &x, Bytes, "UTF-8")
+			Out.Insert(Sub := StrGet(&x, "UTF-8"))
+			String := SubStr(String, StrLen(Sub)+1)
+		}
+		return Out
 	}
 }
