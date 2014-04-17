@@ -65,6 +65,16 @@
 			; If no return value, go on to regular handler
 			if (!this["_on" Cmd](Nick,User,Host,Cmd,Params,Msg,Data))
 				this["on"  Cmd](Nick,User,Host,Cmd,Params,Msg,Data)
+			
+			;Length := StrPut(Msg, "UTF-8")
+			;VarSetCapacity(Buffer, Length)
+			;StrPut(Msg, &Buffer, "UTF-8")
+			;SetFormat, IntegerFast, Hex
+			;Out := ""
+			;Loop, % Length
+			;	Out .= SubStr(*(&Buffer+A_Index-1), 3) " "
+			;SetFormat, IntegerFast, Dec
+			;this.Log(Out)
 		}
 		
 		return
@@ -285,6 +295,12 @@
 		Length := StrPut(Message, Encoding)
 		VarSetCapacity(Buffer, Length)
 		StrPut(Message, &Buffer, Encoding)
+		;SetFormat, IntegerFast, Hex
+		;Out := ""
+		;Loop, % Length
+		;	Out .= SubStr(*(&Buffer+A_Index-1), 3) " "
+		;SetFormat, IntegerFast, Dec
+		;this.Log(Out)
 		return this.TCP.send(&Buffer, Length - !Null)
 	}
 	

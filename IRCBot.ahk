@@ -9,6 +9,7 @@ if !(Settings := Ini_Read(SettingsFile))
 	Settings =
 	( LTrim
 	Greetings = Hey|Hi|Hello
+	EightBall = Yes,No,Maybe
 	[Server]
 	Addr = chat.freenode.net
 	Port = 6667
@@ -23,8 +24,6 @@ if !(Settings := Ini_Read(SettingsFile))
 	Settings := Ini_Read(SettingsFile)
 }
 
-Server := Settings.Server
-
 if (Settings.Bitly)
 	Shorten(Settings.Bitly.login, Settings.Bitly.apiKey)
 
@@ -36,13 +35,14 @@ Gui, Add, Edit, xm y310 w1000 h299 ReadOnly vChat HWNDhChat
 Gui, Add, ListView, ym x1010 w130 h610 vListView -hdr, Hide
 LV_ModifyCol(1, 130)
 Gui, Add, DropDownList, xm w145 h20 vChannel r20 gDropDown, %IRC_Nick%||
-Gui, Add, Edit, w935 h20 x155 yp vText
+Gui, Add, Edit, w935 h20 x155 yp vMessage
 Gui, Add, Button, yp-1 xp940 w45 h22 vSend gSend Default, SEND
 Gui, Show
 
-IRC := new Bot(Settings.Greetings, Server)
+Server := Settings.Server
+IRC := new Bot(Settings.Greetings, StrSplit(Settings.EightBall, ",", " `t"))
 IRC.Connect(Server.Addr, Server.Port, Server.Nick, Server.User, Server.Nick, Server.Pass)
-IRC.SendJOIN(StrSplit(Server.Channels, ",")*)
+IRC.SendJOIN(StrSplit(Server.Channels, ",", " `t")*)
 return
 
 GuiSize:
@@ -61,7 +61,7 @@ GuiControl, Move, Log, x5 y5 w%EditW% h%EditH%
 GuiControl, Move, Chat, x5 y%ChatY% w%EditW% h%EditH%
 GuiControl, Move, ListView, x%ListViewX% y5 w150 h%ListViewH%
 GuiControl, Move, Channel, x5 y%BarY% w145 h20
-Guicontrol, Move, Text, x155 y%BarY% w%TextW% h20
+Guicontrol, Move, Message, x155 y%BarY% w%TextW% h20
 Guicontrol, Move, Send, x%SendX% y%SendY% w45 h22
 return
 
@@ -70,12 +70,12 @@ IRC.UpdateListView()
 return
 
 Send:
-GuiControlGet, Text
-GuiControl,, Text
+GuiControlGet, Message
+GuiControl,, Message ; Clear input box
 
 GuiControlGet, Channel
 
-if RegexMatch(Text, "^/([^ ]+)(?: (.+))?$", Match)
+if RegexMatch(Message, "^/([^ ]+)(?: (.+))?$", Match)
 {
 	if (Match1 = "join")
 		IRC._SendRAW("JOIN " Match2)
@@ -102,8 +102,10 @@ if RegexMatch(Text, "^/([^ ]+)(?: (.+))?$", Match)
 }
 
 ; Send chat and handle it
-IRC.SendPRIVMSG(Channel, Text)
-IRC.onPRIVMSG(IRC.Nick,IRC.User,"","PRIVMSG",[Channel],Text,":" IRC.Nick "!" IRC.User "@" IRC.Host " PRIVMSG " Channel " :" Text)
+Messages := IRC.SendPRIVMSG(Channel, Message)
+for each, Message in Messages
+	IRC.onPRIVMSG(IRC.Nick, IRC.User, IRC.Host, "PRIVMSG", [Channel], Message
+, ":" IRC.Nick "!" IRC.User "@" IRC.Host " PRIVMSG " Channel " :" Message)
 return
 
 GuiClose:
@@ -113,9 +115,10 @@ return
 
 class Bot extends IRC
 {
-	__New(Greetings)
+	__New(Greetings, EightBall)
 	{
 		this.Greetings := Greetings
+		this.EightBall := EightBall
 		return base.__New()
 	}
 	
@@ -250,8 +253,8 @@ class Bot extends IRC
 			}
 			else if (Match1 = "8")
 			{
-				Random, Rand, 0, 1
-				this.Chat(Params[1], Rand ? "Yes" : "No")
+				Random, Rand, 1, % this.EightBall.MaxIndex()
+				this.Chat(Params[1], this.EightBall[Rand])
 			}
 		}
 	}
@@ -261,46 +264,54 @@ class Bot extends IRC
 		Messages := this.SendPRIVMSG(Channel, Message)
 		for each, Message in Messages
 			AppendChat(Channel " <" this.Nick "> " Message)
+		return Messages
 	}
 	
-	Log(Text)
+	Log(Message)
 	{
-		AppendLog(Text)
+		AppendLog(Message)
 	}
 }
 
-Rand(Min, Max)
-{
-	Random, Rand, Min, Max
-	return Rand
-}
-
-AppendLog(Text)
+AppendLog(Message)
 {
 	global hLog
-	Text := RegExReplace(Text, "\R", "") "`r`n"
-	
-	SendMessage, 0x000E, 0, 0,, ahk_id %hLog% ;WM_GETTEXTLENGTH
-	SendMessage, 0x00B1, ErrorLevel, ErrorLevel,, ahk_id %hLog% ;EM_SETSEL
-	SendMessage, 0x00C2, False, &Text,, ahk_id %hLog% ;EM_REPLACESEL
-	
-	SendMessage, 0x0115, 7, 0,, ahk_id %hLog% ;WM_VSCROLL
+	Message := RegExReplace(Message, "\R", "") "`r`n"
+	AppendControl(Message, hLog)
 }
 
-; SendMessages courtesy of TheGood http://www.autohotkey.com/board/topic/52441-append-text-to-an-edit-control/?p=328342
-AppendChat(Text)
+AppendChat(Message)
 {
 	global hChat
 	
 	FormatTime, Stamp,, [hh:mm]
+	Message := Stamp " " RegExReplace(Message, "\R", "") "`r`n"
 	
-	Text := Stamp " " RegExReplace(Text, "\R", "") "`r`n"
+	AppendControl(Message, hChat)
+}
+
+; SendMessages courtesy of TheGood http://www.autohotkey.com/board/topic/52441-append-text-to-an-edit-control/?p=328342
+AppendControl(Text, hWnd)
+{
+	SizeOf := VarSetCapacity(SIF, 28, 0) ; 7 ints/uints
+	NumPut(SizeOf, SIF, 0, "UInt") ; Size of struct
+	NumPut(1|2|4|16, SIF, 4, "UInt") ; SIF_ALL
+	DllCall("GetScrollInfo", "Ptr", hWnd, "Int", 0x1, "Ptr", &SIF)
+	Max := NumGet(SIF, 3*4, "Int")
+	Pag := NumGet(SIF, 4*4, "Int")
+	Pos := NumGet(SIF, 5*4, "Int")
 	
-	SendMessage, 0x000E, 0, 0,, ahk_id %hChat% ;WM_GETTEXTLENGTH
-	SendMessage, 0x00B1, ErrorLevel, ErrorLevel,, ahk_id %hChat% ;EM_SETSEL
-	SendMessage, 0x00C2, False, &Text,, ahk_id %hChat% ;EM_REPLACESEL
+	; WM_VSCROLL doesn't like -redraw mode much
+	;GuiControl, -Redraw, %hWnd%
 	
-	SendMessage, 0x0115, 7, 0,, ahk_id %hChat% ;WM_VSCROLL
+	SendMessage, 0x000E, 0, 0,, ahk_id %hWnd% ;WM_GETTEXTLENGTH
+	SendMessage, 0x00B1, ErrorLevel, ErrorLevel,, ahk_id %hWnd% ;EM_SETSEL
+	SendMessage, 0x00C2, False, &Text,, ahk_id %hWnd% ;EM_REPLACESEL
+	
+	if (Pos - (Max - Pag) - 1)
+		SendMessage, 0x0115, 0x4 + 0x10000*Pos, 0,, ahk_id %hWnd% ;WM_VSCROLL
+	
+	;GuiControl, +Redraw, %hWnd%
 }
 
 ; Fetch latest bitcoin info from bitcoincharts api
