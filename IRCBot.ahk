@@ -10,11 +10,14 @@ if !(Settings := Ini_Read(SettingsFile))
 	( LTrim
 	Greetings = Hey|Hi|Hello
 	EightBall = Yes,No,Maybe
+	ShowHex = 0
+	
 	[Server]
 	Addr = chat.freenode.net
 	Port = 6667
 	Nick = MyRC_Bot
-	User = MyRC
+	User =
+	Pass =
 	Channels = #ahkscript
 	)
 	
@@ -40,7 +43,7 @@ Gui, Add, Button, yp-1 xp940 w45 h22 vSend gSend Default, SEND
 Gui, Show
 
 Server := Settings.Server
-IRC := new Bot(Settings.Greetings, StrSplit(Settings.EightBall, ",", " `t"))
+IRC := new Bot(Settings.Greetings, StrSplit(Settings.EightBall, ",", " `t"), Settings.ShowHex)
 IRC.Connect(Server.Addr, Server.Port, Server.Nick, Server.User, Server.Nick, Server.Pass)
 IRC.SendJOIN(StrSplit(Server.Channels, ",", " `t")*)
 return
@@ -91,7 +94,7 @@ if RegexMatch(Message, "^/([^ ]+)(?: (.+))?$", Match)
 	else if (Match1 = "say")
 		IRC.SendPRIVMSG(Channel, Match2)
 	else if (Match1 = "raw")
-		IRC.SendText(Match2)
+		IRC._SendRaw(Match2)
 	else if (Match1 = "nick")
 		IRC.SendNICK(Match2)
 	else if (Match1 = "quit")
@@ -115,11 +118,11 @@ return
 
 class Bot extends IRC
 {
-	__New(Greetings, EightBall)
+	__New(Greetings, EightBall, ShowHex=false)
 	{
 		this.Greetings := Greetings
 		this.EightBall := EightBall
-		return base.__New()
+		return base.__New(ShowHex)
 	}
 	
 	onMODE(Nick,User,Host,Cmd,Params,Msg,Data)
@@ -217,9 +220,16 @@ class Bot extends IRC
 	{
 		AppendChat(Params[1] " <" Nick "> " Msg)
 		
-		; Greetings
-		if (RegExMatch(Msg, "i)^((" this.Greetings "),?).*" this.Nick, Match))
-			this.SendPRIVMSG(Params[1], Match1 " " Nick)
+		GreetEx := "i)^((?:" this.Greetings
+		. "),?)\s.*" RegExEscape(this.Nick)
+		. "(?P<Punct>[!?.]*).*$"
+		
+		; Greetings (\pP means any punctuation)
+		if (RegExMatch(Msg, GreetEx, Match))
+		{
+			this.SendPRIVMSG(Params[1], Match1 " " Nick . MatchPunct)
+			this.Log(Match0)
+		}
 		
 		; If it is being sent to us, but not by us
 		if (Params[1] == this.Nick && Nick != this.Nick)
@@ -271,6 +281,11 @@ class Bot extends IRC
 	{
 		AppendLog(Message)
 	}
+}
+
+RegExEscape(String)
+{
+	return "\Q" RegExReplace(String, "\\E", "\E\\E\Q") "\E"
 }
 
 AppendLog(Message)

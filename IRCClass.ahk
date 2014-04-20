@@ -1,6 +1,6 @@
 ﻿class IRC
 {
-	__New()
+	__New(ShowHex=false)
 	{
 		this.Channels := []
 		this.Mode := []
@@ -8,6 +8,7 @@
 		this.TCP := new SocketTCP()
 		this._HandleRecvProxy("",this)
 		this.TCP.onRecv := this._HandleRecvProxy
+		this.ShowHex := ShowHex
 		
 		return this
 	}
@@ -42,7 +43,7 @@
 		
 		Data .= Skt.RecvText()
 		
-		DatArray := StrSplit(Data, "`r`n")
+		DatArray := StrSplit(Data, "`r`n", "`r`n")
 		Data := DatArray.Remove(DatArray.MaxIndex())
 		
 		for Key, Value in DatArray
@@ -59,22 +60,15 @@
 			
 			this.Log(Value)
 			
+			if this.ShowHex
+				this._LogHex(Value)
+			
 			Nick := Match1, User := Match2, Host := Match3
 			Cmd := Match4, Params := StrSplit(Match5, " "), Msg := Match6
 			
 			; If no return value, go on to regular handler
 			if (!this["_on" Cmd](Nick,User,Host,Cmd,Params,Msg,Data))
 				this["on"  Cmd](Nick,User,Host,Cmd,Params,Msg,Data)
-			
-			;Length := StrPut(Msg, "UTF-8")
-			;VarSetCapacity(Buffer, Length)
-			;StrPut(Msg, &Buffer, "UTF-8")
-			;SetFormat, IntegerFast, Hex
-			;Out := ""
-			;Loop, % Length
-			;	Out .= SubStr(*(&Buffer+A_Index-1), 3) " "
-			;SetFormat, IntegerFast, Dec
-			;this.Log(Out)
 		}
 		
 		return
@@ -267,7 +261,7 @@
 	
 	_SendRaw(Message, RecvPrefix="", Prefix="", Suffix="", Encoding="UTF-8")
 	{
-		Max := 510 - StrPut(RecvPrefix, Encoding) - StrPut(Suffix, Encoding)
+		Max := 510 - this._ByteCount(RecvPrefix, Encoding) - this._ByteCount(Suffix, Encoding)
 		Out := []
 		Loop, Parse, Message, `n, `r
 		{
@@ -281,7 +275,7 @@
 		return Out
 	}
 	
-	_SendTCP(Message, Encoding="UTF-8", Null=false)
+	_SendTCP(Message, Encoding="UTF-8")
 	{
 		Messages := this._ByteSplit(Message, 512)
 		if Messages.MaxIndex() > 1
@@ -291,17 +285,14 @@
 		}
 		Message := Messages[1]
 		this.Log(Message)
+		if this.ShowHex
+			this._LogHex(Message)
 		
-		Length := StrPut(Message, Encoding)
+		Length := this._ByteCount(Message, Encoding)
 		VarSetCapacity(Buffer, Length)
-		StrPut(Message, &Buffer, Encoding)
-		;SetFormat, IntegerFast, Hex
-		;Out := ""
-		;Loop, % Length
-		;	Out .= SubStr(*(&Buffer+A_Index-1), 3) " "
-		;SetFormat, IntegerFast, Dec
-		;this.Log(Out)
-		return this.TCP.send(&Buffer, Length - !Null)
+		StrPut(Message, &Buffer, Length, Encoding)
+		
+		return this.TCP.send(&Buffer, Length)
 	}
 	
 	IsIn(Channel)
@@ -371,10 +362,30 @@
 		while String
 		{
 			VarSetCapacity(x, Bytes, 0)
-			StrPut(String, &x, Bytes, "UTF-8")
-			Out.Insert(Sub := StrGet(&x, "UTF-8"))
+			StrPut(String, &x, Bytes, Encoding)
+			Out.Insert(Sub := StrGet(&x, Encoding))
 			String := SubStr(String, StrLen(Sub)+1)
 		}
 		return Out
+	}
+	
+	_ByteCount(String, Encoding="UTF-8")
+	{
+		return StrPut(String, Encoding) - 1
+	}
+	
+	_LogHex(String, Encoding="UTF-8")
+	{
+		Length := this._ByteCount(String, Encoding)
+		VarSetCapacity(Buffer, Length)
+		StrPut(String, &Buffer, Length, Encoding)
+		
+		SetFormat, IntegerFast, Hex
+		Out := ""
+		Loop, % Length
+			Out .= SubStr(*(&Buffer+A_Index-1), 3) " "
+		SetFormat, IntegerFast, Dec
+		
+		return this.Log(Out "- " Length+0)
 	}
 }
