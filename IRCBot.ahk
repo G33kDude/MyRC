@@ -204,7 +204,7 @@ class Bot extends IRC
 	
 	onINVITE(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
-		if (User ~= "^\~?G33kDude$")
+		if (User == this.User)
 			this.SendJOIN(Msg)
 	}
 	
@@ -245,7 +245,7 @@ class Bot extends IRC
 		if (RegexMatch(Msg, "^``([^ ]+)(?: (.+))?$", Match))
 		{
 			if (Match1 = "Help")
-				this.Chat(Params[1], "Help, Forum, Docs, g, More, BTC, 8, NewPost, NewNique")
+				this.Chat(Params[1], ShowHelp(Match2))
 			else if (Match1 = "NewPost")
 				this.Chat(Params[1], NewPosts(Match2))
 			else if (Match1 = "NewNique")
@@ -588,10 +588,19 @@ Ini_Reads(FileName)
 	{
 		if !(RegExMatch(A_LoopField, RegEx, Match) && Line := Match1)
 			Continue
-		if RegExMatch(Line, "\[(.+)\]", Match)
+		if RegExMatch(Line, "^\[(.+)\]$", Match)
 			Out.Insert(Match1, Section := [])
 		else if RegExMatch(Line, "^(.+?)\s*=\s*(.+)$", Match)
 			Section.Insert(Match1, Match2)
 	}
 	return Out
+}
+
+ShowHelp(Command)
+{
+	static Commands := Ini_Read("Help.ini")
+	if !Commands.HasKey(Command)
+		Command := "Help"
+	
+	return "Usage: " Commands[Command].Usage "`n" Commands[Command].Desc
 }
