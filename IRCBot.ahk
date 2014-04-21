@@ -227,8 +227,8 @@ class Bot extends IRC
 		; Greetings (\pP means any punctuation)
 		if (RegExMatch(Msg, GreetEx, Match))
 		{
-			this.SendPRIVMSG(Params[1], Match1 " " Nick . MatchPunct)
-			this.Log(Match0)
+			this.Chat(Params[1], Match1 " " Nick . MatchPunct)
+			return
 		}
 		
 		; If it is being sent to us, but not by us
