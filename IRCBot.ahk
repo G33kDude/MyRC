@@ -107,8 +107,7 @@ if RegexMatch(Message, "^/([^ ]+)(?: (.+))?$", Match)
 ; Send chat and handle it
 Messages := IRC.SendPRIVMSG(Channel, Message)
 for each, Message in Messages
-	IRC.onPRIVMSG(IRC.Nick, IRC.User, IRC.Host, "PRIVMSG", [Channel], Message
-, ":" IRC.Nick "!" IRC.User "@" IRC.Host " PRIVMSG " Channel " :" Message)
+	IRC._onRecv(":" IRC.Nick "!" IRC.User "@" IRC.Host " PRIVMSG " Channel " :" Message)
 return
 
 GuiClose:

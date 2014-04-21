@@ -46,32 +46,35 @@
 		DatArray := StrSplit(Data, "`r`n", "`r`n")
 		Data := DatArray.Remove(DatArray.MaxIndex())
 		
-		for Key, Value in DatArray
-		{
-			if (!Value)
-				continue
-			
-			; :Nick!User@Host Command Parameter Parameter Parameter :Message
-			if (!RegExMatch(Value, "^(?:\:([^\!\@ ]*)(?:(?:\!([^\@]*))?\@([^ ]*))? )?([^ ]+)(?: ([^ ]+(?: [^ ]+)*?))??(?: \:(.*?))?\s*$", Match))
-			{
-				this.Log("Malformed message recieved:" Value)
-				continue
-			}
-			
-			this.Log(Value)
-			
-			if this.ShowHex
-				this._LogHex(Value)
-			
-			Nick := Match1, User := Match2, Host := Match3
-			Cmd := Match4, Params := StrSplit(Match5, " "), Msg := Match6
-			
-			; If no return value, go on to regular handler
-			if (!this["_on" Cmd](Nick,User,Host,Cmd,Params,Msg,Data))
-				this["on"  Cmd](Nick,User,Host,Cmd,Params,Msg,Data)
-		}
+		for each, Segment in DatArray
+			this._OnRecv(Segment)
 		
 		return
+	}
+	
+	_OnRecv(Data)
+	{
+		if (!Data)
+			return
+		
+		; :Nick!User@Host Command Parameter Parameter Parameter :Message
+		if (!RegExMatch(Data, "^(?:\:([^\!\@ ]*)(?:(?:\!([^\@]*))?\@([^ ]*))? )?([^ ]+)(?: ([^ ]+(?: [^ ]+)*?))??(?: \:(.*?))?\s*$", Match))
+		{
+			this.Log("Malformed data recieved:" Data)
+			return
+		}
+		
+		this.Log(Data)
+		
+		if this.ShowHex
+			this._LogHex(Data)
+		
+		Nick := Match1, User := Match2, Host := Match3
+		Cmd := Match4, Params := StrSplit(Match5, " "), Msg := Match6
+		
+		; If no return value, go on to regular handler
+		if (!this["_on" Cmd](Nick,User,Host,Cmd,Params,Msg,Data))
+			this["on"  Cmd](Nick,User,Host,Cmd,Params,Msg,Data)
 	}
 	
 	_onNICK(Nick,User,Host,Cmd,Params,Msg,Data)
