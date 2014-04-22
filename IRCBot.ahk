@@ -374,7 +374,7 @@ GetBTC()
 Search(CSE, Text, More=false)
 { ; Perform a search. Available searches: Forum, Ahk, Script, Docs, g
 	static Base := "https://ajax.googleapis.com/ajax/services/search/web?v=1.0"
-	, json, index := 1
+	, json, index := 1,Google := ComObjCreate("WinHttp.WinHttpRequest.5.1")
 	
 	if More
 		Index++
@@ -394,7 +394,6 @@ Search(CSE, Text, More=false)
 			return "Error, not an available search engine"
 		URI .= "&q=" UriEncode(Text)
 		
-		Google := ComObjCreate("WinHttp.WinHttpRequest.5.1")
 		Google.Open("GET", Base . URI), Google.Send()
 		json := Json_ToObj(Google.ResponseText)
 		Index := 1
