@@ -23,7 +23,7 @@ GetBTC()
 		
 		; Fetch the prices
 		BTC := ComObjCreate("WinHttp.WinHttpRequest.5.1")
-		BTC.Open("GET", API)
+		BTC.Open("GET", API, False)
 		BTC.Send()
 		BTC := BTC.ResponseText
 		
@@ -65,7 +65,7 @@ Search(CSE, Text, More=false)
 			return "Error, not an available search engine"
 		URI .= "&q=" UriEncode(Text)
 		
-		Google.Open("GET", Base . URI), Google.Send()
+		Google.Open("GET", Base . URI, False), Google.Send()
 		json := Json_ToObj(Google.ResponseText)
 		Index := 1
 	}
@@ -111,8 +111,8 @@ UriDecode(Uri)
 
 HtmlDecode(Text)
 {
-	static html := ComObjCreate("htmlfile")
-	html.open(), html.write(Text)
+	html := ComObjCreate("htmlfile")
+	html.write(Text)
 	return html.body.innerText
 }
 
@@ -239,7 +239,7 @@ Shorten(LongUrl, SetKey="")
 	. "&longUrl=" UriEncode(Trim(LongUrl, " `r`n`t"))
 	. "&format=txt"
 	
-	http.Open("GET", Url), http.Send()
+	http.Open("GET", Url, False), http.Send()
 	ShortUrl := Trim(http.responseText, " `r`n`t")
 	Shortened.Insert(LongUrl, ShortUrl)
 	
