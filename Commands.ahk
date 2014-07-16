@@ -255,6 +255,7 @@ ShowHelp(Command)
 	return "Usage: " Commands[Command].Usage "`n" Commands[Command].Desc
 }
 
+; Modified from http://www.autohotkey.com/board/topic/35990-string-matching-using-trigrams/
 MatchItemFromList(sList, sItem)
 {
 	iLength := StrLen(sItem)
