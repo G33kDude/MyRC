@@ -159,7 +159,7 @@ class Socket
 	__eventProcUnregister(obj)
 	{
 		a := SocketEventProc(0, 0, "register", 0)
-		a.remove(obj.socket)
+		a.remove(obj.socket, "")
 		return (DllCall("ws2_32\WSAAsyncSelect", "ptr", obj.socket, "ptr", A_ScriptHwnd, "uint", 0, "uint", 0)=0) ? 1 : 0
 	}
 }

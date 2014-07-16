@@ -6,8 +6,8 @@
 		this.Mode := []
 		this.Prefix := {"Letters":{}, "Symbols":{}}
 		this.TCP := new SocketTCP()
-		this._HandleRecvProxy("",this)
-		this.TCP.onRecv := this._HandleRecvProxy
+		this.TCP.Parent := this
+		this.TCP.onRecv := this._HandleRecv
 		this.ShowHex := ShowHex
 		
 		return this
@@ -27,19 +27,12 @@
 		this._SendRaw("USER " this.User " 0 * :" this.Name)
 	}
 	
-	; Calls _HandleRecv in the right context.
-	; Without this, it would think 'this' was the other class
-	_HandleRecvProxy(Skt, Parent="")
-	{
-		static _Parent
-		if (Parent)
-			return _Parent := Parent
-		return _Parent._HandleRecv(Skt)
-	}
-	
 	_HandleRecv(Skt)
 	{
 		static Data
+		
+		; This is necessary becayse _HandleRecv() is called in the context of the socket class
+		this := this.Parent
 		
 		Data .= Skt.RecvText()
 		
@@ -233,7 +226,6 @@
 		Out := []
 		for Nick, Meta in this.Channels[Channel]
 		{
-			Insert := true
 			Needs := true
 			Loop, Parse, MODE
 			{
@@ -246,18 +238,12 @@
 					continue
 				
 				if (Needs && !Meta["MODE"].HasKey(A_LoopField)) ; If it should have, but doesn't
-				{
-					Insert := false
-					break
-				}
+					Continue, 2
 				else if (!Needs && Meta["MODE"].HasKey(A_LoopField)) ; If it shouldn't have, but does
-				{
-					Insert := false
-					break
-				}
+					Continue, 2
 			}
-			if (Insert)
-				Out.Insert(Nick, Meta)
+			
+			Out.Insert(Nick, Meta)
 		}
 		return Out
 	}

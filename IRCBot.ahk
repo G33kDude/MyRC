@@ -48,7 +48,24 @@ Server := Settings.Server
 IRC := new Bot(Settings.Greetings, StrSplit(Settings.EightBall, ",", " `t"), Settings.ShowHex)
 IRC.Connect(Server.Addr, Server.Port, Server.Nick, Server.User, Server.Nick, Server.Pass)
 IRC.SendJOIN(StrSplit(Server.Channels, ",", " `t")*)
+
+myTcp := new SocketTCP()
+myTcp.bind("addr_any", 26656)
+myTcp.listen()
+myTcp.onAccept := Func("OnTCPAccept")
 return
+
+OnTCPAccept()
+{
+	global myTcp
+	newTcp := myTcp.accept()
+	Text := newTcp.recvText()
+	Comma := InStr(Text, ",")
+	Channel := Trim(SubStr(Text, 0, Comma))
+	Message := Trim(SubStr(Text, Comma+1))
+	IRC.Chat(Channel, Message)
+	newTcp.__Delete()
+}
 
 GuiSize:
 EditH := Floor((A_GuiHeight-40) / 2)
@@ -123,6 +140,11 @@ class Bot extends IRC
 	{
 		this.Greetings := Greetings
 		this.EightBall := EightBall
+		FileRead, Json, Docs.json
+		this.Docs := Json_ToObj(Json)
+		this.DocsList := []
+		For Name, Location in this.Docs
+			this.DocsList[A_Index] := Name
 		return base.__New(ShowHex)
 	}
 	
@@ -195,11 +217,11 @@ class Bot extends IRC
 			return
 		
 		LV_Delete()
-		for Nick,Meta in this.GetMODE(Channel, "o")
+		for Nick in this.GetMODE(Channel, "o")
 			LV_Add("", this.Prefix.Letters["o"] . Nick)
-		for Nick,Meta in this.GetMODE(Channel, "v -o") ; voiced not opped
+		for Nick in this.GetMODE(Channel, "v -o") ; voiced not opped
 			LV_Add("", this.Prefix.Letters["v"] . Nick)
-		for Nick,Meta in this.GetMODE(Channel, "-ov") ; not opped or voiced
+		for Nick in this.GetMODE(Channel, "-ov") ; not opped or voiced
 			LV_Add("", Nick)
 	}
 	
@@ -253,10 +275,17 @@ class Bot extends IRC
 				this.Chat(Params[1], NewNique(Match2))
 			else if (Match1 = "Shorten")
 				this.Chat(Params[1], Shorten(Match2))
-			Else if Match1 in Forum,Ahk,Script,Docs,g
+			else if Match1 in Forum,Ahk,Script,g
 				this.Chat(Params[1], Search(Match1, Match2))
 			else if (Match1 = "More")
 				this.Chat(Params[1], Search(Match1, Match2, True))
+			else if (Match1 = "Docs")
+			{
+				if (Doc := MatchItemFromList(this.DocsList, Match2))
+					this.Chat(Params[1], Doc.Text " - " Shorten("http://ahkscript.org/" this.Docs[Doc.Text]) " - Fitness: " Doc.Fitness)
+				else
+					this.Chat(Params[1], "No results found")
+			}
 			else if (Match1 = "BTC" && (BTC := GetBTC()[Match2, "24h"]))
 			{
 				StringUpper, Match2, Match2
@@ -267,6 +296,15 @@ class Bot extends IRC
 				Random, Rand, 1, % this.EightBall.MaxIndex()
 				this.Chat(Params[1], this.EightBall[Rand])
 			}
+			else if (Match1 = "p")
+			{
+				if (Params[1] = "#ahk")
+					this.Chat(Params[1], "Please use the unofficial AutoHotkey pastebin http://ahk.us.to/")
+				else
+					this.Chat(Params[1], "Please use the unofficial AutoHotkey pastebin http://a.hk.am/")
+			}
+			else
+				this.Chat(Params[1], Search("forum", Trim(Match1 " " Match2))) ; Forum search
 		}
 	}
 	
