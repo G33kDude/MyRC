@@ -298,10 +298,8 @@ class Bot extends IRC
 			}
 			else if (Match1 = "p")
 			{
-				if (Params[1] = "#ahk")
-					this.Chat(Params[1], "Please use the unofficial AutoHotkey pastebin http://ahk.us.to/")
-				else
-					this.Chat(Params[1], "Please use the unofficial AutoHotkey pastebin http://a.hk.am/")
+				Url := Params[1] = "#ahk" ? "http://ahk.us.to/" : "http://a.hk.am/"
+				this.Chat(Params[1], "Please use the unofficial AutoHotkey pastebin to share code: " Url)
 			}
 			else
 				this.Chat(Params[1], Search("forum", Trim(Match1 " " Match2))) ; Forum search
