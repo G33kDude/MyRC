@@ -241,6 +241,7 @@ class Bot extends IRC
 	
 	onPRIVMSG(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
+		Channel := Params[1]
 		AppendChat(Params[1] " <" Nick "> " Msg)
 		
 		GreetEx := "i)^((?:" this.Greetings
@@ -301,6 +302,8 @@ class Bot extends IRC
 				Url := Params[1] = "#ahk" ? "http://ahk.us.to/" : "http://a.hk.am/"
 				this.Chat(Params[1], "Please use the unofficial AutoHotkey pastebin to share code: " Url)
 			}
+			else if (FileExist(File := ("plugins\" RegExReplace(Match1, "i)[^a-z0-9]") ".ahk")))
+				Run, "%A_AhkPath%" "%File%" "%Channel%" "%Match2%"
 			else
 				this.Chat(Params[1], Search("forum", Trim(Match1 " " Match2))) ; Forum search
 		}
