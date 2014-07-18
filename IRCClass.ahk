@@ -29,15 +29,13 @@
 	
 	_HandleRecv(Skt)
 	{
-		static Data
-		
 		; This is necessary becayse _HandleRecv() is called in the context of the socket class
 		this := this.Parent
 		
-		Data .= Skt.RecvText()
+		this.Data .= Skt.RecvText()
 		
-		DatArray := StrSplit(Data, "`r`n", "`r`n")
-		Data := DatArray.Remove(DatArray.MaxIndex())
+		DatArray := StrSplit(this.Data, "`r`n", "`r`n")
+		this.Data := DatArray.Remove(DatArray.MaxIndex())
 		
 		for each, Segment in DatArray
 			this._OnRecv(Segment)
