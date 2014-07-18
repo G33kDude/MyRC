@@ -283,7 +283,7 @@ class Bot extends IRC
 			else if (Match1 = "Docs")
 			{
 				if (Doc := MatchItemFromList(this.DocsList, Match2))
-					this.Chat(Channel, Doc.Text " - " Shorten("http://ahkscript.org/" this.Docs[Doc.Text]) " - Fitness: " Doc.Fitness)
+					this.Chat(Channel, Doc.Text " - " Shorten("http://ahkscript.org/" this.Docs[Doc.Text]))
 				else
 					this.Chat(Channel, "No results found")
 			}
