@@ -242,7 +242,7 @@ class Bot extends IRC
 	onPRIVMSG(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
 		Channel := Params[1]
-		AppendChat(Params[1] " <" Nick "> " Msg)
+		AppendChat(Channel " <" Nick "> " Msg)
 		
 		GreetEx := "i)^((?:" this.Greetings
 		. "),?)\s.*" RegExEscape(this.Nick)
@@ -251,12 +251,12 @@ class Bot extends IRC
 		; Greetings
 		if (RegExMatch(Msg, GreetEx, Match))
 		{
-			this.Chat(Params[1], Match1 " " Nick . MatchPunct)
+			this.Chat(Channel, Match1 " " Nick . MatchPunct)
 			return
 		}
 		
 		; If it is being sent to us, but not by us
-		if (Params[1] == this.Nick && Nick != this.Nick)
+		if (Channel == this.Nick && Nick != this.Nick)
 			this.SendPRIVMSG(Nick, "Hello to you, good sir")
 		
 		if Msg contains % this.Nick
@@ -269,43 +269,43 @@ class Bot extends IRC
 		if (RegexMatch(Msg, "^``([^ ]+)(?: (.+))?$", Match))
 		{
 			if (Match1 = "Help")
-				this.Chat(Params[1], ShowHelp(Match2))
+				this.Chat(Channel, ShowHelp(Match2))
 			else if (Match1 = "NewPost")
-				this.Chat(Params[1], NewPosts(Match2))
+				this.Chat(Channel, NewPosts(Match2))
 			else if (Match1 = "NewNique")
-				this.Chat(Params[1], NewNique(Match2))
+				this.Chat(Channel, NewNique(Match2))
 			else if (Match1 = "Shorten")
-				this.Chat(Params[1], Shorten(Match2))
+				this.Chat(Channel, Shorten(Match2))
 			else if Match1 in Forum,Ahk,Script,g
-				this.Chat(Params[1], Search(Match1, Match2))
+				this.Chat(Channel, Search(Match1, Match2))
 			else if (Match1 = "More")
-				this.Chat(Params[1], Search(Match1, Match2, True))
+				this.Chat(Channel, Search(Match1, Match2, True))
 			else if (Match1 = "Docs")
 			{
 				if (Doc := MatchItemFromList(this.DocsList, Match2))
-					this.Chat(Params[1], Doc.Text " - " Shorten("http://ahkscript.org/" this.Docs[Doc.Text]) " - Fitness: " Doc.Fitness)
+					this.Chat(Channel, Doc.Text " - " Shorten("http://ahkscript.org/" this.Docs[Doc.Text]) " - Fitness: " Doc.Fitness)
 				else
-					this.Chat(Params[1], "No results found")
+					this.Chat(Channel, "No results found")
 			}
 			else if (Match1 = "BTC" && (BTC := GetBTC()[Match2, "24h"]))
 			{
 				StringUpper, Match2, Match2
-				this.Chat(Params[1], "1BTC == " BTC . Match2)
+				this.Chat(Channel, "1BTC == " BTC . Match2)
 			}
 			else if (Match1 = "8")
 			{
 				Random, Rand, 1, % this.EightBall.MaxIndex()
-				this.Chat(Params[1], this.EightBall[Rand])
+				this.Chat(Channel, this.EightBall[Rand])
 			}
 			else if (Match1 = "p")
 			{
-				Url := Params[1] = "#ahk" ? "http://ahk.us.to/" : "http://a.hk.am/"
-				this.Chat(Params[1], "Please use the unofficial AutoHotkey pastebin to share code: " Url)
+				Url := Channel = "#ahk" ? "http://ahk.us.to/" : "http://a.hk.am/"
+				this.Chat(Channel, "Please use the unofficial AutoHotkey pastebin to share code: " Url)
 			}
 			else if (FileExist(File := ("plugins\" RegExReplace(Match1, "i)[^a-z0-9]") ".ahk")))
 				Run, "%A_AhkPath%" "%File%" "%Channel%" "%Match2%"
 			else
-				this.Chat(Params[1], Search("forum", Trim(Match1 " " Match2))) ; Forum search
+				this.Chat(Channel, Search("forum", Trim(Match1 " " Match2))) ; Forum search
 		}
 	}
 	
