@@ -1,4 +1,5 @@
-﻿#Include Socket.ahk
+﻿#Include %A_LineFile%\..
+#Include Socket.ahk
 #Include IRCClass.ahk
 #Include Json.ahk
 #Include ini.ahk
@@ -270,10 +271,6 @@ class Bot extends IRC
 		{
 			if (Match1 = "Help")
 				this.Chat(Channel, ShowHelp(Match2))
-			else if (Match1 = "NewPost")
-				this.Chat(Channel, NewPosts(Match2))
-			else if (Match1 = "NewNique")
-				this.Chat(Channel, NewNique(Match2))
 			else if (Match1 = "Shorten")
 				this.Chat(Channel, Shorten(Match2))
 			else if Match1 in Forum,Ahk,Script,g
