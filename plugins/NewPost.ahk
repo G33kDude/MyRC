@@ -12,7 +12,7 @@ if (Settings.Bitly)
 	Shorten(Settings.Bitly.login, Settings.Bitly.apiKey)
 
 MaxEntries := Params[2]
-if (MaxEntries < 1 || MaxEntries > 8) ; Strings are greater than integers
+if (MaxEntries < 1 || MaxEntries > 8 || !MaxEntries) ; Strings are greater than integers
 	MaxEntries := 4
 
 Feed := "http://ahkscript.org/boards/feed.php"
@@ -22,9 +22,10 @@ http := ComObjCreate("WinHttp.WinHttpRequest.5.1")
 http.Open("GET", Feed, False)
 http.setRequestHeader("User-Agent", UA)
 http.Send()
+
+; Trim out some fluff that breaks wine compatiblity
 Rss := RegExReplace(http.responseText, "s)<feed[^>]*>(.*)</feed>.*$", "<feed>$1</feed>")
 
-; Load XML
 xml:=ComObjCreate("MSXML2.DOMDocument")
 xml.loadXML(Rss)
 if !entries := xml.selectnodes("/feed/entry")
@@ -46,3 +47,31 @@ ExitApp
 return
 
 #Include %A_LineFile%\..\..\IRCBot.ahk
+
+/*
+	NewNique(Max=4)
+	{
+		Max := Floor(Max)
+		if (Max < -7 || Max > 7 || !Max)
+			Max := 4
+		
+		Posts := GetPosts(Max > 0 ? 16 : -16)
+		if !IsObject(Posts)
+			return Posts
+		
+		if (Cached := (A_TickCount-Posts.Remove(1)) // 1000)
+			Out := "Information is " Cached " seconds old (use negative to force refresh)`n"
+		
+		Max := Abs(Max), i := 0
+		for each, Post in Posts
+		{
+			if InStr(Post.Title, " • Re: ")
+				continue
+			if (++i >= Max)
+				Break
+			Out .= Post.Author " - " Post.Title " - " Post.Url "`n"
+		}
+		
+		return Out ? Out : "No new posts"
+	}
+*/

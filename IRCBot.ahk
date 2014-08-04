@@ -141,11 +141,6 @@ class Bot extends IRC
 	{
 		this.Greetings := Greetings
 		this.EightBall := EightBall
-		FileRead, Json, Docs.json
-		this.Docs := Json_ToObj(Json)
-		this.DocsList := []
-		For Name, Location in this.Docs
-			this.DocsList[A_Index] := Name
 		return base.__New(ShowHex)
 	}
 	
@@ -271,24 +266,12 @@ class Bot extends IRC
 		{
 			if (Match1 = "Help")
 				this.Chat(Channel, ShowHelp(Match2))
-			else if (Match1 = "Shorten")
-				this.Chat(Channel, Shorten(Match2))
+			;else if (Match1 = "Shorten")
+				;this.Chat(Channel, Shorten(Match2))
 			else if Match1 in Forum,Ahk,Script,g
 				this.Chat(Channel, Search(Match1, Match2))
 			else if (Match1 = "More")
 				this.Chat(Channel, Search(Match1, Match2, True))
-			else if (Match1 = "Docs")
-			{
-				if (Doc := MatchItemFromList(this.DocsList, Match2))
-					this.Chat(Channel, Doc.Text " - " Shorten("http://ahkscript.org/" this.Docs[Doc.Text]))
-				else
-					this.Chat(Channel, "No results found")
-			}
-			else if (Match1 = "BTC" && (BTC := GetBTC()[Match2, "24h"]))
-			{
-				StringUpper, Match2, Match2
-				this.Chat(Channel, "1BTC == " BTC . Match2)
-			}
 			else if (Match1 = "8")
 			{
 				Random, Rand, 1, % this.EightBall.MaxIndex()
