@@ -268,7 +268,7 @@ class Bot extends IRC
 		{
 			for Alias, Repl in this.Aliases
 				if (Match1 = Alias)
-					if !RegExMatch(Repl " " Match2, "^(\S+)(?:\s(.+?))?\s*$", Match)
+					if !RegExMatch(Repl " " Match2, "^(\S+)(?:\s+(.+?))?\s*$", Match)
 						return
 			
 			File := "plugins\" RegExReplace(Match1, "i)[^a-z0-9]") ".ahk"
