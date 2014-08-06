@@ -1,41 +1,4 @@
-﻿Search(CSE, Text, More=false)
-{ ; Perform a search. Available searches: Forum, Ahk, Script, Docs, g
-	static Base := "https://ajax.googleapis.com/ajax/services/search/web?v=1.0"
-	, json, index := 1, Google := ComObjCreate("WinHttp.WinHttpRequest.5.1")
-	
-	if More
-		Index++
-	Else
-	{
-		if (CSE = "Forum")
-			URI := "&cx=017058124035087163209%3A1s6iw9x3kna"
-		else if (CSE = "Ahk")
-			URI := "&cx=017058124035087163209%3Amvadmlmwt3m"
-		else if (CSE = "Script")
-			URI := "&cx=017058124035087163209%3Ag-1wna_xozc"
-		else if (CSE = "Docs")
-			URI := "&cx=017058124035087163209%3Az23pf7b3a3q"
-		else if (CSE = "g")
-			URI := ""
-		else
-			return "Error, not an available search engine"
-		URI .= "&q=" UriEncode(Text)
-		
-		Google.Open("GET", Base . URI, False), Google.Send()
-		json := Json_ToObj(Google.ResponseText)
-		Index := 1
-	}
-	
-	Desc := json.responseData.results[Index].titleNoFormatting
-	Url := json.responseData.results[Index].url
-	
-	if !(Url && Desc)
-		return "No results found"
-	
-	return htmlDecode(Desc) " - " Shorten(UriDecode(Url))
-}
-
-; Modified by GeekDude from http://goo.gl/0a0iJq
+﻿; Modified by GeekDude from http://goo.gl/0a0iJq
 UriEncode(Uri)
 {
 	VarSetCapacity(Var, StrPut(Uri, "UTF-8"), 0), StrPut(Uri, &Var, "UTF-8")

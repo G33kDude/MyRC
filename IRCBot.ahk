@@ -47,7 +47,7 @@ Gui, Add, Button, yp-1 xp940 w45 h22 vSend gSend Default, SEND
 Gui, Show
 
 Server := Settings.Server
-IRC := new Bot(Settings.Trigger, Settings.Greetings, StrSplit(Settings.EightBall, ",", " `t"), Settings.ShowHex)
+IRC := new Bot(Settings.Trigger, Settings.Greetings, Settings.Aliases, Settings.ShowHex)
 IRC.Connect(Server.Addr, Server.Port, Server.Nick, Server.User, Server.Nick, Server.Pass)
 IRC.SendJOIN(StrSplit(Server.Channels, ",", " `t")*)
 
@@ -85,8 +85,8 @@ GuiControl, Move, Log, x5 y5 w%EditW% h%EditH%
 GuiControl, Move, Chat, x5 y%ChatY% w%EditW% h%EditH%
 GuiControl, Move, ListView, x%ListViewX% y5 w150 h%ListViewH%
 GuiControl, Move, Channel, x5 y%BarY% w145 h20
-Guicontrol, Move, Message, x155 y%BarY% w%TextW% h20
-Guicontrol, Move, Send, x%SendX% y%SendY% w45 h22
+GuiControl, Move, Message, x155 y%BarY% w%TextW% h20
+GuiControl, Move, Send, x%SendX% y%SendY% w45 h22
 return
 
 DropDown:
@@ -138,11 +138,11 @@ return
 
 class Bot extends IRC
 {
-	__New(Trigger, Greetings, EightBall, ShowHex=false)
+	__New(Trigger, Greetings, Aliases, ShowHex=false)
 	{
 		this.Trigger := Trigger
 		this.Greetings := Greetings
-		this.EightBall := EightBall
+		this.Aliases := Aliases
 		return base.__New(ShowHex)
 	}
 	
@@ -264,30 +264,23 @@ class Bot extends IRC
 		}
 		
 		; If it is a command
-		if (RegexMatch(Msg, "^" this.Trigger "([^ ]+)(?: (.+))?$", Match))
+		if (RegexMatch(Msg, "^" this.Trigger "(\S+)(?:\s+(.+?))?\s*$", Match))
 		{
-			if Match1 in Forum,Ahk,Script,g
-				this.Chat(Channel, Search(Match1, Match2))
-			else if (Match1 = "More")
-				this.Chat(Channel, Search(Match1, Match2, True))
-			else if (Match1 = "8")
+			for Alias, Repl in this.Aliases
+				if (Match1 = Alias)
+					if !RegExMatch(Repl " " Match2, "^(\S+)(?:\s(.+?))?\s*$", Match)
+						return
+			
+			File := "plugins\" RegExReplace(Match1, "i)[^a-z0-9]") ".ahk"
+			Param := Match2
+			
+			if !FileExist(File)
 			{
-				Random, Rand, 1, % this.EightBall.MaxIndex()
-				this.Chat(Channel, this.EightBall[Rand])
+				File := "plugins\Default.ahk"
+				Param := Trim(Match1 " " Match2)
 			}
-			else if (Match1 = "p")
-			{
-				Url := Channel = "#ahk" ? "http://ahk.us.to/" : "http://a.hk.am/"
-				this.Chat(Channel, "Please use the unofficial AutoHotkey pastebin to share code: " Url)
-			}
-			else if (FileExist(File := ("plugins\" RegExReplace(Match1, "i)[^a-z0-9]") ".ahk")))
-			{
-				StringReplace, Channel, Channel, `", \`", All
-				StringReplace, Match2, Match2, `", \`", All
-				Run, "%A_AhkPath%" "%File%" "%Channel%" "%Match2%"
-			}
-			else
-				this.Chat(Channel, Search("forum", Trim(Match1 " " Match2))) ; Forum search
+			
+			Plugin(File, Channel, Param)
 		}
 	}
 	
@@ -349,4 +342,15 @@ AppendControl(Text, hWnd)
 		SendMessage, 0x0115, 0x4 + 0x10000*Pos, 0,, ahk_id %hWnd% ;WM_VSCROLL
 	
 	;GuiControl, +Redraw, %hWnd%
+}
+
+Plugin(Params*)
+{
+	RunStr := """" A_AhkPath """"
+	for each, Param in Params
+	{
+		StringReplace, Param, Param, `", \`", All
+		RunStr .= " """ Param """"
+	}
+	Run, % RunStr
 }

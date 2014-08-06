@@ -13,9 +13,9 @@ Ini_Reads(FileName)
 		if !(RegExMatch(A_LoopField, RegEx, Match) && Line := Match1)
 			Continue
 		if RegExMatch(Line, "^\[(.+)\]$", Match)
-			Out.Insert(Match1, Section := [])
-		else if RegExMatch(Line, "^(.+?)\s*=\s*(.+)$", Match)
-			Section.Insert(Match1, Match2)
+			Out[Match1] := (Section := [])
+		else if RegExMatch(Line, "^(.+?)\s*=\s*(.*)$", Match)
+			Section[Match1] := Match2
 	}
 	return Out
 }

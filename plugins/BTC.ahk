@@ -29,7 +29,7 @@ GetBTC()
 	; Read the last bitcoin data from file.
 	; If there is data, load it
 	; If not, use a dummy to indicate we should fetch new data
-	FileRead, File, LastBTC.txt
+	FileRead, File, temp\LastBTC.txt
 	if File
 		File := Json_ToObj(File)
 	else
@@ -53,8 +53,8 @@ GetBTC()
 		Rates := Json_ToObj(BTC)
 		
 		; Save the prices to file
-		FileDelete, LastBTC.txt
-		FileAppend, [%A_Now%`, %BTC%], LastBTC.txt
+		FileDelete, temp\LastBTC.txt
+		FileAppend, [%A_Now%`, %BTC%], temp\LastBTC.txt
 		
 		ToolTip
 	}
