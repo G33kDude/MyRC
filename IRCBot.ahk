@@ -281,7 +281,11 @@ class Bot extends IRC
 				this.Chat(Channel, "Please use the unofficial AutoHotkey pastebin to share code: " Url)
 			}
 			else if (FileExist(File := ("plugins\" RegExReplace(Match1, "i)[^a-z0-9]") ".ahk")))
+			{
+				StringReplace, Channel, Channel, `", \`", All
+				StringReplace, Match2, Match2, `", \`", All
 				Run, "%A_AhkPath%" "%File%" "%Channel%" "%Match2%"
+			}
 			else
 				this.Chat(Channel, Search("forum", Trim(Match1 " " Match2))) ; Forum search
 		}
