@@ -109,12 +109,3 @@ Shorten(LongUrl, SetKey="")
 	
 	return ShortUrl
 }
-
-ShowHelp(Command)
-{
-	static Commands := Ini_Read("Help.ini")
-	if !Commands.HasKey(Command)
-		Command := "Help"
-	
-	return "Usage: " Commands[Command].Usage "`n" Commands[Command].Desc
-}

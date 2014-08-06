@@ -266,11 +266,7 @@ class Bot extends IRC
 		; If it is a command
 		if (RegexMatch(Msg, "^" this.Trigger "([^ ]+)(?: (.+))?$", Match))
 		{
-			if (Match1 = "Help")
-				this.Chat(Channel, ShowHelp(Match2))
-			;else if (Match1 = "Shorten")
-				;this.Chat(Channel, Shorten(Match2))
-			else if Match1 in Forum,Ahk,Script,g
+			if Match1 in Forum,Ahk,Script,g
 				this.Chat(Channel, Search(Match1, Match2))
 			else if (Match1 = "More")
 				this.Chat(Channel, Search(Match1, Match2, True))
