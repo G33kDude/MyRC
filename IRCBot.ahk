@@ -13,6 +13,7 @@ if !(Settings := Ini_Read(SettingsFile))
 	( LTrim
 	Greetings = Hey|Hi|Hello
 	EightBall = Yes,No,Maybe
+	Trigger = !
 	ShowHex = 0
 	
 	[Server]
@@ -46,7 +47,7 @@ Gui, Add, Button, yp-1 xp940 w45 h22 vSend gSend Default, SEND
 Gui, Show
 
 Server := Settings.Server
-IRC := new Bot(Settings.Greetings, StrSplit(Settings.EightBall, ",", " `t"), Settings.ShowHex)
+IRC := new Bot(Settings.Trigger, Settings.Greetings, StrSplit(Settings.EightBall, ",", " `t"), Settings.ShowHex)
 IRC.Connect(Server.Addr, Server.Port, Server.Nick, Server.User, Server.Nick, Server.Pass)
 IRC.SendJOIN(StrSplit(Server.Channels, ",", " `t")*)
 
@@ -137,8 +138,9 @@ return
 
 class Bot extends IRC
 {
-	__New(Greetings, EightBall, ShowHex=false)
+	__New(Trigger, Greetings, EightBall, ShowHex=false)
 	{
+		this.Trigger := Trigger
 		this.Greetings := Greetings
 		this.EightBall := EightBall
 		return base.__New(ShowHex)
@@ -262,7 +264,7 @@ class Bot extends IRC
 		}
 		
 		; If it is a command
-		if (RegexMatch(Msg, "^``([^ ]+)(?: (.+))?$", Match))
+		if (RegexMatch(Msg, "^" this.Trigger "([^ ]+)(?: (.+))?$", Match))
 		{
 			if (Match1 = "Help")
 				this.Chat(Channel, ShowHelp(Match2))
