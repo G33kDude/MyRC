@@ -7,6 +7,10 @@ Params := []
 Loop, %0%
 	Params[A_Index] := %A_Index%
 
+Settings := Ini_Read("Settings.ini")
+if (Settings.Bitly)
+	Shorten(Settings.Bitly.login, Settings.Bitly.apiKey)
+
 Channel := Params[1]
 Msg := Params[2]
 FileRead, Json, Docs.json
