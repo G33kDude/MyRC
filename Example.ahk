@@ -4,7 +4,7 @@
 
 MyBot := new IRCBot() ; Create a new instance of your bot
 MyBot.Connect("chat.freenode.net", 6667, "MyBotsName") ; Connect to an IRC server
-MyBot.SendJOIN("#sjc_bot") ; Join a channel
+MyBot.SendJOIN("#botters-test") ; Join a channel
 return
 
 class IRCBot extends IRC ; Create a bot that extends the irc library
