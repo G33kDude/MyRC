@@ -4,6 +4,15 @@
 #Include Json.ahk
 #Include ini.ahk
 #Include Commands.ahk
+;#Include plugins\BTC.ahk
+;#Include plugins\Dance.ahk
+;#Include plugins\Default.ahk
+;#Include plugins\Docs.ahk
+;#Include plugins\EightBall.ahk
+;#Include plugins\Help.ahk
+;#Include plugins\NewPost.ahk
+;#Include plugins\Pastebin.ahk
+;#Include plugins\Search.ahk
 
 SettingsFile := A_ScriptDir "\Settings.ini"
 
