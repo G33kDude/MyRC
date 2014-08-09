@@ -13,6 +13,7 @@
 ;#Include plugins\NewPost.ahk
 ;#Include plugins\Pastebin.ahk
 ;#Include plugins\Search.ahk
+;#Include plugins\Zalgo.ahk
 
 SettingsFile := A_ScriptDir "\Settings.ini"
 
