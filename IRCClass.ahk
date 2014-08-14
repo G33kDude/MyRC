@@ -45,27 +45,33 @@
 	
 	_OnRecv(Data)
 	{
+		static RegEx :=
+		( LTrim Join
+			`"^(?:\:(?P<Nick>[^\!\@ ]+)
+			(?:\!(?P<User>[^\@ ]+))?
+			(?:\@(?P<Host>[^ ]+))? )?
+			(?P<Cmd>[^ ]+)
+			(?: (?P<Params>[^\:][^ ]*(?: [^\:][^ ]*)*))?
+			(?: \:(?P<Msg>.*))?$`"
+		)
+		
 		if (!Data)
 			return
 		
-		; :Nick!User@Host Command Parameter Parameter Parameter :Message
-		if (!RegExMatch(Data, "^(?:\:([^\!\@ ]*)(?:(?:\!([^\@]*))?\@([^ ]*))? )?([^ ]+)(?: ([^ ]+(?: [^ ]+)*?))??(?: \:(.*?))?\s*$", Match))
+		if (!RegExMatch(Data, RegEx, p))
 		{
 			this.Log("Malformed data recieved:" Data)
 			return
 		}
+		Params := StrSplit(pParams, " ")
 		
 		this.Log(Data)
-		
 		if this.ShowHex
 			this._LogHex(Data)
 		
-		Nick := Match1, User := Match2, Host := Match3
-		Cmd := Match4, Params := StrSplit(Match5, " "), Msg := Match6
-		
 		; If no return value, go on to regular handler
-		if (!this["_on" Cmd](Nick,User,Host,Cmd,Params,Msg,Data))
-			this["on"  Cmd](Nick,User,Host,Cmd,Params,Msg,Data)
+		if (!this["_on" pCmd](pNick,pUser,pHost,pCmd,Params,pMsg,pData))
+			this["on" pCmd](pNick,pUser,pHost,pCmd,Params,pMsg,pData)
 	}
 	
 	_onNICK(Nick,User,Host,Cmd,Params,Msg,Data)
