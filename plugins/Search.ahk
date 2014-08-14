@@ -22,6 +22,9 @@ Search(Text)
 	static Base := "https://ajax.googleapis.com/ajax/services/search/web?v=1.0"
 	, json, Google := ComObjCreate("WinHttp.WinHttpRequest.5.1")
 	
+	if !InStr(FileExist("temp"), "D")
+		FileCreateDir, temp
+	
 	if (Text ~= "i)^More")
 	{
 		if !FileExist("temp\Search.json")

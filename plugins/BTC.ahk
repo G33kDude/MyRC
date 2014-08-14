@@ -26,6 +26,9 @@ GetBTC()
 {
 	static API := "http://api.bitcoincharts.com/v1/weighted_prices.json"
 	
+	if !InStr(FileExist("temp"), "D")
+		FileCreateDir, temp
+	
 	; Read the last bitcoin data from file.
 	; If there is data, load it
 	; If not, use a dummy to indicate we should fetch new data
