@@ -2,18 +2,7 @@
 #Include Socket.ahk
 #Include IRCClass.ahk
 #Include Json.ahk
-#Include ini.ahk
-#Include Commands.ahk
-;#Include plugins\BTC.ahk
-;#Include plugins\Dance.ahk
-;#Include plugins\Default.ahk
-;#Include plugins\Docs.ahk
-;#Include plugins\EightBall.ahk
-;#Include plugins\Help.ahk
-;#Include plugins\NewPost.ahk
-;#Include plugins\Pastebin.ahk
-;#Include plugins\Search.ahk
-;#Include plugins\Zalgo.ahk
+#Include Utils.ahk
 
 SettingsFile := A_ScriptDir "\Settings.ini"
 
@@ -276,21 +265,16 @@ class Bot extends IRC
 		; If it is a command
 		if (RegexMatch(Msg, "^" this.Trigger "(\S+)(?:\s+(.+?))?\s*$", Match))
 		{
-			for Alias, Repl in this.Aliases
-				if (Match1 = Alias)
-					if !RegExMatch(Repl " " Match2, "^(\S+)(?:\s+(.+?))?\s*$", Match)
-						return
-			
-			File := "plugins\" RegExReplace(Match1, "i)[^a-z0-9]") ".ahk"
-			Param := Match2
+			Match1 := RegExReplace(Match1, "i)[^a-z0-9]")
+			File := "plugins\" Match1 ".ahk"
+			Param := Json_FromObj({"PRIVMSG":{"Nick":Nick,"User":User,"Host":Host
+			,"Cmd":Cmd,"Params":Params,"Msg":Msg,"Data":Data}
+			,"Plugin":{"Name":Match1,"Param":Match2},"Channel":Params[1]})
 			
 			if !FileExist(File)
-			{
 				File := "plugins\Default.ahk"
-				Param := Trim(Match1 " " Match2)
-			}
 			
-			Plugin(File, Channel, Param)
+			Plugin(File, Param)
 		}
 	}
 	

@@ -70,8 +70,8 @@
 			this._LogHex(Data)
 		
 		; If no return value, go on to regular handler
-		if (!this["_on" pCmd](pNick,pUser,pHost,pCmd,Params,pMsg,pData))
-			this["on" pCmd](pNick,pUser,pHost,pCmd,Params,pMsg,pData)
+		if (!this["_on" pCmd](pNick,pUser,pHost,pCmd,Params,pMsg,Data))
+			this["on" pCmd](pNick,pUser,pHost,pCmd,Params,pMsg,Data)
 	}
 	
 	_onNICK(Nick,User,Host,Cmd,Params,Msg,Data)
