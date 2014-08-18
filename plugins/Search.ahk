@@ -22,7 +22,7 @@ Search(Text)
 		Results.Remove(1)
 		
 		for each, Result in Results
-			Out .= HtmlDecode(Result.titleNoFormatting) "-" Shorten(UriDecode(Result.url)) "`n"
+			Out .= HtmlDecode(Result.titleNoFormatting) " - " Shorten(UriDecode(Result.url)) "`n"
 	}
 	else
 	{
@@ -35,7 +35,8 @@ Search(Text)
 		File.Write(Response)
 		File.Close()
 		
-		Result := Json_ToObj(Response).responseData.results[1]
+		if !(Result := Json_ToObj(Response).responseData.results[1])
+			return "No results found"
 		Out := HtmlDecode(Result.titleNoFormatting) " - " Shorten(UriDecode(Result.url))
 	}
 	
