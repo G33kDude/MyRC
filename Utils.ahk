@@ -100,3 +100,13 @@ Rand(Min, Max)
 	Random, Rand, Min, Max
 	return Rand
 }
+
+Run(Params*)
+{
+	for each, Param in Params
+	{
+		StringReplace, Param, Param, `", \`", All
+		RunStr .= """" Param """ "
+	}
+	Run, %RunStr%
+}

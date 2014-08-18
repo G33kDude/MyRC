@@ -263,18 +263,18 @@ class Bot extends IRC
 		}
 		
 		; If it is a command
-		if (RegexMatch(Msg, "^" this.Trigger "(\S+)(?:\s+(.+?))?\s*$", Match))
+		if (RegexMatch(Msg, "^" this.Trigger "\K(\S+)(?:\s+(.+?))?\s*$", Match))
 		{
 			Match1 := RegExReplace(Match1, "i)[^a-z0-9]")
 			File := "plugins\" Match1 ".ahk"
 			Param := Json_FromObj({"PRIVMSG":{"Nick":Nick,"User":User,"Host":Host
 			,"Cmd":Cmd,"Params":Params,"Msg":Msg,"Data":Data}
-			,"Plugin":{"Name":Match1,"Param":Match2},"Channel":Params[1]})
+			,"Plugin":{"Name":Match1,"Param":Match2,"Match":Match},"Channel":Params[1]})
 			
 			if !FileExist(File)
 				File := "plugins\Default.ahk"
 			
-			Plugin(File, Param)
+			Run(A_AhkPath, File, Param)
 		}
 	}
 	
@@ -336,15 +336,4 @@ AppendControl(Text, hWnd)
 		SendMessage, 0x0115, 0x4 + 0x10000*Pos, 0,, ahk_id %hWnd% ;WM_VSCROLL
 	
 	;GuiControl, +Redraw, %hWnd%
-}
-
-Plugin(Params*)
-{
-	RunStr := """" A_AhkPath """"
-	for each, Param in Params
-	{
-		StringReplace, Param, Param, `", \`", All
-		RunStr .= " """ Param """"
-	}
-	Run, % RunStr
 }
