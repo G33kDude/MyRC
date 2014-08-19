@@ -6,6 +6,7 @@ SetWorkingDir, %A_LineFile%\..
 SetBatchLines, -1
 #Include %A_LineFile%\..
 #Include Socket.ahk
+#Include Json.ahk
 #Include Utils.ahk
 
 Json = %1%
