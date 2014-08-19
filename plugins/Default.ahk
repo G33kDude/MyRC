@@ -4,7 +4,8 @@ for Alias, Repl in Settings.Aliases
 {
 	if (Plugin.Name = Alias)
 	{
-		RegExMatch(Repl " " Plugin.Param, "^(\S+)(?:\s+(.+?))?\s*$", Match)
+		if !RegExMatch(Repl " " Plugin.Param, "^(\S+)(?:\s+(.+?))?\s*$", Match)
+			ExitApp
 		Match1 := RegExReplace(Match1, "i)[^a-z0-9]")
 		if FileExist("plugins\" Match1 ".ahk")
 		{
