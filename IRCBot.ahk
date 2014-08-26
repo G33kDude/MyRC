@@ -1,6 +1,7 @@
 ﻿#Include %A_LineFile%\..
 #Include Socket.ahk
 #Include IRCClass.ahk
+#Include Class_RichEdit.ahk
 #Include Json.ahk
 #Include Utils.ahk
 
@@ -22,6 +23,10 @@ if !(Settings := Ini_Read(SettingsFile))
 	User =
 	Pass =
 	Channels = #ahkscript
+	
+	[Bitly]
+	login =
+	apiKey =
 	)
 	
 	File := FileOpen(SettingsFile, "w")
@@ -30,20 +35,41 @@ if !(Settings := Ini_Read(SettingsFile))
 	Settings := Ini_Read(SettingsFile)
 }
 
-if (Settings.Bitly)
+if (Settings.Bitly.login)
 	Shorten(Settings.Bitly.login, Settings.Bitly.apiKey)
 
 Gui, Margin, 5, 5
 Gui, Font, s9, Lucida Console
 Gui, +HWNDhWnd +Resize
 Gui, Add, Edit, w1000 h300 ReadOnly vLog HWNDhLog
-Gui, Add, Edit, xm y310 w1000 h299 ReadOnly vChat HWNDhChat
+
+;Gui, Add, Edit, xm y310 w1000 h299 ReadOnly vChat HWNDhChat
+Chat := new RichEdit(1, "xm y310 w1000 h299 vChat")
+Chat.SetBkgndColor(0x3F3F3F)
+Chat.SetOptions(["READONLY"], "Set")
+Font := {"Name":"Courier New","Color":0xDCDCCC,"Size":9}
+Colors := ["DCDCCC", "262626"
+, "6C6C9C", "9ECE9E"
+, "E89393", "BC6C4C"
+, "BC6C9C", "DC8C6C"
+, "F8F893", "CBECD0"
+, "80D4AA", "8CD0D3"
+, "C0BED1", "ECBCBC"
+, "8F8F8F", "DFDFDF"]
+Chat.SetFont(Font)
+Chat.AutoUrl(True)
+Chat.HideSelection(False)
+Chat.SetEventMask(["LINK"])
+Chat.ID := DllCall("GetWindowLong", "UPtr", Chat.hWnd, "Int", -12) ; GWL_ID
+
 Gui, Add, ListView, ym x1010 w130 h610 vListView -hdr, Hide
 LV_ModifyCol(1, 130)
 Gui, Add, DropDownList, xm w145 h20 vChannel r20 gDropDown, %IRC_Nick%||
 Gui, Add, Edit, w935 h20 x155 yp vMessage
 Gui, Add, Button, yp-1 xp940 w45 h22 vSend gSend Default, SEND
 Gui, Show
+
+OnMessage(0x4E, "WM_NOTIFY")
 
 Server := Settings.Server
 IRC := new Bot(Settings.Trigger, Settings.Greetings, Settings.Aliases, Settings.ShowHex)
@@ -55,6 +81,23 @@ myTcp.bind("addr_any", 26656)
 myTcp.listen()
 myTcp.onAccept := Func("OnTCPAccept")
 return
+
+WM_NOTIFY(wParam, lParam, Msg, hWnd)
+{
+	static WM_LBUTTONDBLCLK := 0x203
+	global Chat
+	
+	if (wParam == Chat.ID)
+	{
+		Msg := NumGet(lParam+A_PtrSize*2+4, "UInt")
+		if (Msg == WM_LBUTTONDBLCLK)
+		{
+			Min := NumGet(lParam+A_PtrSize*4+8, "Int")
+			Max := NumGet(lParam+A_PtrSize*4+12, "Int")
+			Run, % Chat.GetTextRange(Min, Max)
+		}
+	}
+}
 
 OnTCPAccept()
 {
@@ -154,7 +197,7 @@ class Bot extends IRC
 	{
 		if (Nick == this.Nick)
 			this.UpdateDropDown(Params[1])
-		AppendChat(Params[1] " " Nick " has joined")
+		AppendChat(Params[1] " " NickColor(Nick) " has joined")
 		this.UpdateListView()
 	}
 	
@@ -168,7 +211,7 @@ class Bot extends IRC
 	{
 		if (Nick == this.Nick)
 			this.UpdateDropDown()
-		AppendChat(Params[1] " " Nick " has parted" (Msg ? " (" Msg ")" : ""))
+		AppendChat(Params[1] " " NickColor(Nick) " has parted" (Msg ? " (" Msg ")" : ""))
 		this.UpdateListView()
 	}
 	
@@ -177,7 +220,7 @@ class Bot extends IRC
 		; Can't use nick, was already handled by class
 		if (User == this.User)
 			this.UpdateDropDown()
-		AppendChat(Nick " changed its nick to " Msg)
+		AppendChat(NickColor(Nick) " changed its nick to " NickColor(Msg))
 		this.UpdateListView()
 	}
 	
@@ -185,13 +228,13 @@ class Bot extends IRC
 	{
 		if (Params[2] == this.Nick)
 			this.UpdateDropDown()
-		AppendChat(Params[1] " " Params[2] " was kicked by " Nick " (" Msg ")")
+		AppendChat(Params[1] " " NickColor(Params[2]) " was kicked by " NickColor(Nick) " (" Msg ")")
 		this.UpdateListView()
 	}
 	
 	onQUIT(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
-		AppendChat(Nick " has quit (" Msg ")")
+		AppendChat(NickColor(Nick) " has quit (" Msg ")")
 		this.UpdateListView()
 	}
 	
@@ -213,6 +256,7 @@ class Bot extends IRC
 		if !IRC.IsIn(Channel)
 			return
 		
+		GuiControl, -Redraw, ListView
 		LV_Delete()
 		for Nick in this.GetMODE(Channel, "o")
 			LV_Add("", this.Prefix.Letters["o"] . Nick)
@@ -220,6 +264,7 @@ class Bot extends IRC
 			LV_Add("", this.Prefix.Letters["v"] . Nick)
 		for Nick in this.GetMODE(Channel, "-ov") ; not opped or voiced
 			LV_Add("", Nick)
+		GuiControl, +Redraw, ListView
 	}
 	
 	onINVITE(Nick,User,Host,Cmd,Params,Msg,Data)
@@ -231,7 +276,7 @@ class Bot extends IRC
 	onCTCP(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
 		if (Cmd = "ACTION")
-			AppendChat(Params[1] " * " Nick " " Msg)
+			AppendChat(Params[1] " * " NickColor(Nick) " " Msg)
 		else
 			this.SendCTCPReply(Nick, Cmd, "Zark off!")
 	}
@@ -239,7 +284,7 @@ class Bot extends IRC
 	onPRIVMSG(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
 		Channel := Params[1]
-		AppendChat(Channel " <" Nick "> " Msg)
+		AppendChat(Channel " <" NickColor(Nick) "> " Msg)
 		
 		GreetEx := "i)^((?:" this.Greetings
 		. "),?)\s.*" RegExEscape(this.Nick)
@@ -282,7 +327,7 @@ class Bot extends IRC
 	{
 		Messages := this.SendPRIVMSG(Channel, Message)
 		for each, Message in Messages
-			AppendChat(Channel " <" this.Nick "> " Message)
+			AppendChat(Channel " <" NickColor(this.Nick) "> " Message)
 		return Messages
 	}
 	
@@ -299,41 +344,150 @@ RegExEscape(String)
 
 AppendLog(Message)
 {
+	static WM_VSCROLL := 0x115, SB_BOTTOM := 7
+	, EM_SETSEL := 0xB1, EM_REPLACESEL := 0xC2
+	, EM_GETSEL := 0xB0, WM_GETTEXTLENGTH := 0xE
+	, EM_SCROLLCARET := 0xB7
 	global hLog
+	
 	Message := RegExReplace(Message, "\R", "") "`r`n"
-	AppendControl(Message, hLog)
+	
+	GuiControl, -Redraw, %hLog%
+	
+	VarSetCapacity(Sel, 16, 0)
+	SendMessage(hLog, EM_GETSEL, &Sel, &Sel+8)
+	Min := NumGet(Sel, 0, "UInt")
+	Max := NumGet(Sel, 8, "UInt")
+	
+	Len := SendMessage(hLog, WM_GETTEXTLENGTH, 0, 0)
+	SendMessage(hLog, EM_SETSEL, Len, Len)
+	SendMessage(hLog, EM_REPLACESEL, False, &Message)
+	
+	if (Min != Len)
+	{
+		SendMessage(hLog, EM_SETSEL, Min, Max)
+		GuiControl, +Redraw, %hLog%
+	}
+	else
+	{
+		GuiControl, +Redraw, %hLog%
+		SendMessage(hLog, WM_VSCROLL, SB_BOTTOM, 0)
+	}
 }
 
 AppendChat(Message)
 {
-	global hChat
+	static WM_VSCROLL := 0x115, SB_BOTTOM := 7
+	global Chat, Colors, Font
+	
+	Message := RegExReplace(Message, "\R", "") "`n"
 	
 	FormatTime, Stamp,, [hh:mm]
-	Message := Stamp " " RegExReplace(Message, "\R", "") "`r`n"
+	RTF := ToRTF(Stamp " " Message, Colors, Font)
 	
-	AppendControl(Message, hChat)
+	GuiControl, -Redraw, % Chat.hWnd
+	
+	Sel := Chat.GetSel()
+	Len := Chat.GetTextLen()
+	Chat.SetSel(Len, Len)
+	Chat.SetText(RTF, ["SELECTION"])
+	
+	if (Sel.S == Len)
+	{
+		GuiControl, +Redraw, % Chat.hWnd
+		SendMessage(Chat.hWnd, WM_VSCROLL, SB_BOTTOM, 0)
+	}
+	else
+	{
+		Chat.SetSel(Sel.S, Sel.E)
+		GuiControl, +Redraw, % Chat.hWnd
+	}
+	
+	GuiControl, MoveDraw, % Chat.hWnd ; Updates scrollbar position in WINE
 }
 
-; SendMessages courtesy of TheGood http://www.autohotkey.com/board/topic/52441-append-text-to-an-edit-control/?p=328342
-AppendControl(Text, hWnd)
+SendMessage(hWnd, Msg, wParam, lParam)
+{
+	return DllCall("SendMessage", "UPtr", hWnd, "UInt", Msg, "UPtr", wParam, "Ptr", lParam)
+}
+
+ToRTF(Text, Colors, Font)
+{
+	FontTable := "{\fonttbl{\f0\fnil\fcharset0 "
+	FontTable .= Font.Name
+	FontTable .= ";`}}"
+	
+	ColorTable := "{\colortbl"
+	for each, Color in Colors
+	{
+		Red := "0x" SubStr(Color, 1, 2)
+		Green := "0x" SubStr(Color, 3, 2)
+		Blue := "0x" SubStr(Color, 5, 2)
+		ColorTable .= ";\red" Red+0 "\green" Green+0 "\blue" Blue+0
+	}
+	Color := Font.Color & 0xFFFFFF
+	ColorTable .= ";\red" Color>>16&0xFF "\green" Color>>8&0xFF "\blue" Color&0xFF
+	ColorTable .= ";`}"
+	
+	RTF := "{\rtf"
+	RTF .= FontTable
+	RTF .= ColorTable
+	
+	for each, Char in ["\", "{", "}", "`r", "`n"]
+		StringReplace, Text, Text, %Char%, \%Char%, All
+	
+	While RegExMatch(Text, "^(.*)\x03(\d{0,2})(?:,(\d{1,2}))?(.*)$", Match)
+		Text := Match1 . ((Match2!="") ? "\cf" Match2+1 : "\cf1") . ((Match3!="") ? "\highlight" Match3+1 : "") " " Match4
+	
+	Bold := Chr(2)
+	Color := Chr(3)
+	Normal := Chr(15)
+	Italic := Chr(29)
+	Under := Chr(31)
+	NormalFlags := "\b0\i0\ul0\cf17\highlight0\f0\fs" Font.Size*2
+	
+	tBold := tItalic := tUnder := false
+	For each, Char in StrSplit(Normal . Text . Normal)
+	{
+		if (Char == Bold)
+			RTF .= ((tBold := !tBold) ? "\b1" : "\b0") " "
+		else if (Char == Italic)
+			RTF .= ((tItalic := !tItalic) ? "\i1" : "\i0") " "
+		else if (Char == Under)
+			RTF .= ((tUnder := !tUnder) ? "\ul1" : "\ul0") " "
+		else if (Char == Normal)
+			RTF .= NormalFlags " ", tBold := tItalic := tUnder := False
+		else if (Asc(Char) > 0xFF)
+			RTF .= "\u" Asc(Char) . Char
+		else
+			RTF .= Char
+	}
+	
+	RTF .= "}"
+	return RTF
+}
+
+GetScrollInfo(hWnd)
 {
 	SizeOf := VarSetCapacity(SIF, 28, 0) ; 7 ints/uints
-	NumPut(SizeOf, SIF, 0, "UInt") ; Size of struct
-	NumPut(1|2|4|16, SIF, 4, "UInt") ; SIF_ALL
+	NumPut(SizeOf, SIF, 0, "UInt")
+	NumPut(23, SIF, 4, "UInt") ; SIF_ALL
 	DllCall("GetScrollInfo", "Ptr", hWnd, "Int", 0x1, "Ptr", &SIF)
+	Min := NumGet(SIF, 2*4, "Int")
 	Max := NumGet(SIF, 3*4, "Int")
-	Pag := NumGet(SIF, 4*4, "Int")
+	Page := NumGet(SIF, 4*4, "UInt")
 	Pos := NumGet(SIF, 5*4, "Int")
+	return {"Min": Min, "Max": Max, "Page": Page, "Pos": Pos}
+}
+
+NickColor(Nick)
+{
+	for each, Char in StrSplit(Nick)
+		Sum += Asc(Char)
 	
-	; WM_VSCROLL doesn't like -redraw mode much
-	;GuiControl, -Redraw, %hWnd%
+	Color := Mod(Sum, 16)
+	if Color in 0,1,14,15
+		Color := Mod(Sum, 12) + 2
 	
-	SendMessage, 0x000E, 0, 0,, ahk_id %hWnd% ;WM_GETTEXTLENGTH
-	SendMessage, 0x00B1, ErrorLevel, ErrorLevel,, ahk_id %hWnd% ;EM_SETSEL
-	SendMessage, 0x00C2, False, &Text,, ahk_id %hWnd% ;EM_REPLACESEL
-	
-	if (Pos - (Max - Pag) - 1)
-		SendMessage, 0x0115, 0x4 + 0x10000*Pos, 0,, ahk_id %hWnd% ;WM_VSCROLL
-	
-	;GuiControl, +Redraw, %hWnd%
+	return Chr(2) . Chr(3) . Color . Nick . Chr(3) . Chr(2)
 }
