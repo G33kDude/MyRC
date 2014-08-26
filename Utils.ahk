@@ -105,6 +105,7 @@ Run(Params*)
 {
 	for each, Param in Params
 	{
+		StringReplace, Param, Param, \, \\, All
 		StringReplace, Param, Param, `", \`", All
 		RunStr .= """" Param """ "
 	}
