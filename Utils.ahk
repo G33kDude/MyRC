@@ -105,8 +105,7 @@ Run(Params*)
 {
 	for each, Param in Params
 	{
-		StringReplace, Param, Param, \, \\, All
-		StringReplace, Param, Param, `", \`", All
+		Param := RegExReplace(Param, "(\\*)""", "$1$1\""")
 		RunStr .= """" Param """ "
 	}
 	Run, %RunStr%
