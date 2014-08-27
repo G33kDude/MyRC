@@ -1,4 +1,8 @@
 ﻿#Include %A_LineFile%\..\..\Plugin.ahk
+/*
+	Usage: Docs <Page name>
+	Desc: Finds a page in the documentation.
+*/
 
 FileRead, Json, Docs.json
 Docs := Json_ToObj(Json)

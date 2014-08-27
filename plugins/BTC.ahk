@@ -1,4 +1,8 @@
 ﻿#Include %A_LineFile%\..\..\Plugin.ahk
+/*
+	Usage: BTC [Currency Name]
+	Desc: Shows the latest bitcoin exchange rates for a given currency, from bitcoincharts. Defaults to USD
+*/
 
 Currency := Plugin.Param
 Rates := GetBTC()

@@ -1,4 +1,8 @@
 ﻿#Include %A_LineFile%\..\..\Plugin.ahk
+/*
+	Usage: Search <Query>
+	Desc: Searches google
+*/
 
 Chat(Channel, Search(Plugin.Param))
 ExitApp

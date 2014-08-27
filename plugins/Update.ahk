@@ -1,4 +1,8 @@
 ﻿#Include %A_LineFile%\..\..\Plugin.ahk
+/*
+	Usage: Update
+	Desc: Chats a link to the latest maintained AHK installer
+*/
 
 Installer := "http://ahkscript.org/download/ahk-install.exe"
 VersionFile := "http://ahkscript.org/download/1.1/version.txt"

@@ -1,4 +1,8 @@
 ﻿#Include %A_LineFile%\..\..\Plugin.ahk
+/*
+	Usage: NewPost [MaxEntries]
+	Desc: Gets the last couple entries from the AHKScript forum. MaxEntries to return defaults to 4, and is limited to 8.
+*/
 
 MaxEntries := Plugin.Param
 if (MaxEntries < 1 || MaxEntries > 8 || !MaxEntries) ; Strings are greater than integers

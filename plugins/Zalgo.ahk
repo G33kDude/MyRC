@@ -1,4 +1,8 @@
 ﻿#Include %A_LineFile%\..\..\Plugin.ahk
+/*
+	Usage: Zalgo <Text>
+	Desc: H̷̡e͢ w̨͡h̢͟ơ͝ ̸͡w̢a̡͠i͝͡͏ts̵͝ ̨͘͢b̵͝e͘hi͠͏͏nd ̢t͟͟h͢è ͡w̛͏͝a͢͠l̷͡l
+*/
 
 Chat(Channel, Zalgo(Plugin.Param))
 ExitApp

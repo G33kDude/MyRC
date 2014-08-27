@@ -111,3 +111,8 @@ Run(Params*)
 	}
 	Run, %RunStr%
 }
+
+RegExEscape(String)
+{
+	return "\Q" RegExReplace(String, "\\E", "\E\\E\Q") "\E"
+}

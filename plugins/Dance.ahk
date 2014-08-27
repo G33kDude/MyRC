@@ -1,4 +1,8 @@
 ﻿#Include %A_LineFile%\..\..\Plugin.ahk
+/*
+	Usage: Dance
+	Desc: Everybody dance now!
+*/
 
 Bold := Chr(2)
 Color := Chr(3)

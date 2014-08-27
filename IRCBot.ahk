@@ -337,11 +337,6 @@ class Bot extends IRC
 	}
 }
 
-RegExEscape(String)
-{
-	return "\Q" RegExReplace(String, "\\E", "\E\\E\Q") "\E"
-}
-
 AppendLog(Message)
 {
 	static WM_VSCROLL := 0x115, SB_BOTTOM := 7
