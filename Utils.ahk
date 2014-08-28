@@ -89,7 +89,7 @@ Ini_Reads(FileName)
 			Continue
 		if RegExMatch(Line, "^\[(.+)\]$", Match)
 			Out[Match1] := (Section := [])
-		else if RegExMatch(Line, "^(.+?)\s*=\s*(.*)$", Match)
+		else if RegExMatch(Line, "^\s*(.+?)\s*=\s*(.*?)\s*$", Match)
 			Section[Match1] := Match2
 	}
 	return Out
