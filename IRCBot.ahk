@@ -281,6 +281,11 @@ class Bot extends IRC
 			this.SendCTCPReply(Nick, Cmd, "Zark off!")
 	}
 	
+	onNOTICE(Nick,User,Host,Cmd,Params,Msg,Data)
+	{
+		AppendChat("-" NickColor(Nick) "- " Msg)
+	}
+	
 	onPRIVMSG(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
 		Channel := Params[1]
