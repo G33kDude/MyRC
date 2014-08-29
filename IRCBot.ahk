@@ -165,7 +165,7 @@ if RegexMatch(Message, "^/([^ ]+)(?: (.+))?$", Match)
 	else if (Match1 = "me")
 	{
 		IRC.SendACTION(Channel, Match2)
-		AppendChat(Channel " * " IRC.Nick " " Match2)
+		AppendChat(Channel " * " NickColor(IRC.Nick) " " Match2)
 	}
 	else if (Match1 = "part")
 		IRC.SendPART(Channel, Match2)
