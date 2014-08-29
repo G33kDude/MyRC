@@ -40,7 +40,7 @@
 	
 	_HandleRecv(Skt)
 	{
-		; This is necessary becayse _HandleRecv() is called in the context of the socket class
+		; This is necessary becase _HandleRecv() is called in the context of the socket class
 		this := this.Parent
 		
 		this.Data .= Skt.RecvText()
@@ -339,7 +339,7 @@
 		if !this.CanJoin
 			return
 		for each, Channel in this.ChannelBuffer
-			this._SendRaw("JOIN " Channel)
+			this._SendRaw("JOIN " Channel) ; TODO: Use a CSV list of channels
 	}
 	
 	SendPART(Channel,Message="")

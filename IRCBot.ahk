@@ -346,12 +346,18 @@ class Bot extends IRC
 	
 	OnDisconnect(Socket)
 	{
+		ChannelBuffer := []
+		for Channel in this.Channels
+			ChannelBuffer.Insert(Channel)
+		
 		AppendLog("Attempting to reconnect: try #1")
 		while !this.Connect(this.Server, this.Port, this.DefaultNicks[1], this.DefaultUser, this.Name, this.Pass)
 		{
 			Sleep, 5000
 			AppendLog("Attempting to reconnect: try #" A_Index+1)
 		}
+		
+		this.SendJOIN(ChannelBuffer*)
 		
 		this.UpdateDropDown()
 		this.UpdateListView()
