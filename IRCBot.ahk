@@ -27,6 +27,22 @@ if !(Settings := Ini_Read(SettingsFile))
 	[Bitly]
 	login =
 	apiKey =
+	
+	[Aliases]
+	Script = Search site:ahkscript.org/boards/
+	Ahk = Search site:autohotkey.com/board/
+	Forum = Search site:ahkscript.org/boards/ OR site:autohotkey.com/board/
+	More = Search More
+	Google = Search
+	g = Search
+	p = Pastebin
+	Paste = Pastebin
+	8 = EightBall
+	Eight = EightBall
+	Upgrade = Update
+	Source = Template My source can be found at http://github.com/G33kDude/MyRC
+	Stuff =
+	Stuffstats =
 	)
 	
 	File := FileOpen(SettingsFile, "w")
