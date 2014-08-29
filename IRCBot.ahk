@@ -19,10 +19,10 @@ if !(Settings := Ini_Read(SettingsFile))
 	[Server]
 	Addr = chat.freenode.net
 	Port = 6667
-	Nick = MyRC_Bot
+	Nicks = MyRC_Bot,MyRC
 	User =
 	Pass =
-	Channels = #ahkscript
+	Channels = #ahkscript,#botters-test
 	
 	[Bitly]
 	login =
@@ -64,7 +64,7 @@ Chat.ID := DllCall("GetWindowLong", "UPtr", Chat.hWnd, "Int", -12) ; GWL_ID
 
 Gui, Add, ListView, ym x1010 w130 h610 vListView -hdr, Hide
 LV_ModifyCol(1, 130)
-Gui, Add, DropDownList, xm w145 h20 vChannel r20 gDropDown, %IRC_Nick%||
+Gui, Add, DropDownList, xm w145 h20 vChannel r20 gDropDown
 Gui, Add, Edit, w935 h20 x155 yp vMessage
 Gui, Add, Button, yp-1 xp940 w45 h22 vSend gSend Default, SEND
 Gui, Show
@@ -72,8 +72,9 @@ Gui, Show
 OnMessage(0x4E, "WM_NOTIFY")
 
 Server := Settings.Server
-IRC := new Bot(Settings.Trigger, Settings.Greetings, Settings.Aliases, Settings.ShowHex)
-IRC.Connect(Server.Addr, Server.Port, Server.Nick, Server.User, Server.Nick, Server.Pass)
+Nicks := StrSplit(Server.Nicks, ",", " `t")
+IRC := new Bot(Settings.Trigger, Settings.Greetings, Settings.Aliases, Nicks, Settings.ShowHex)
+IRC.Connect(Server.Addr, Server.Port, Nicks[1], Server.User, Server.Nick, Server.Pass)
 IRC.SendJOIN(StrSplit(Server.Channels, ",", " `t")*)
 
 myTcp := new SocketTCP()
@@ -180,11 +181,12 @@ return
 
 class Bot extends IRC
 {
-	__New(Trigger, Greetings, Aliases, ShowHex=false)
+	__New(Trigger, Greetings, Aliases, DefaultNicks, ShowHex=false)
 	{
 		this.Trigger := Trigger
 		this.Greetings := Greetings
 		this.Aliases := Aliases
+		this.DefaultNicks := DefaultNicks
 		return base.__New(ShowHex)
 	}
 	
@@ -253,8 +255,6 @@ class Bot extends IRC
 	UpdateListView()
 	{
 		GuiControlGet, Channel
-		if !IRC.IsIn(Channel)
-			return
 		
 		GuiControl, -Redraw, ListView
 		LV_Delete()
@@ -328,12 +328,48 @@ class Bot extends IRC
 		}
 	}
 	
+	OnDisconnect(Socket)
+	{
+		AppendLog("Attempting to reconnect: try #1")
+		while !this.Connect(this.Server, this.Port, this.DefaultNicks[1], this.DefaultUser, this.Name, this.Pass)
+		{
+			Sleep, 5000
+			AppendLog("Attempting to reconnect: try #" A_Index+1)
+		}
+		
+		this.UpdateDropDown()
+		this.UpdateListView()
+	}
+	
 	Chat(Channel, Message)
 	{
 		Messages := this.SendPRIVMSG(Channel, Message)
 		for each, Message in Messages
 			AppendChat(Channel " <" NickColor(this.Nick) "> " Message)
 		return Messages
+	}
+	
+	; ERR_NICKNAMEINUSE
+	on433(Nick,User,Host,Cmd,Params,Msg,Data)
+	{
+		this.Reconnect()
+	}
+	
+	Reconnect()
+	{
+		for Index, Nick in this.DefaultNicks
+			if (Nick == this.Nick)
+				Break
+		Index := (Index >= this.DefaultNicks.MaxIndex()) ? 1 : Index+1
+		NewNick := this.DefaultNicks[Index]
+		
+		AppendChat(NickColor(this.Nick) " changed its nick to " NickColor(NewNick))
+		
+		this.SendNICK(newNick)
+		this.Nick := newNick
+		
+		this.UpdateDropDown()
+		this.UpdateListView()
 	}
 	
 	Log(Message)

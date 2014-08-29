@@ -2,12 +2,10 @@
 {
 	__New(ShowHex=false)
 	{
-		this.Channels := []
-		this.Mode := []
-		this.Prefix := {"Letters":{}, "Symbols":{}}
 		this.TCP := new SocketTCP()
 		this.TCP.Parent := this
 		this.TCP.onRecv := this._HandleRecv
+		this.TCP.onDisconnect := this._HandleDisc
 		this.ShowHex := ShowHex
 		
 		return this
@@ -15,16 +13,29 @@
 	
 	Connect(Server, Port, Nick, User="", Name="", Pass="")
 	{
+		this.Channels := []
+		this.Mode := []
+		this.Prefix := {"Letters":{}, "Symbols":{}}
+		this.CanJoin := false
+		this.ChannelBuffer := []
+		
+		this.Server := Server
+		this.Port := Port
 		this.Nick := Nick
 		this.User := User ? User : Nick
+		this.DefaultUser := User
 		this.Name := Name ? Name : Nick
+		this.Pass := Pass
 		
-		this.TCP.Connect(Server, Port)
+		if !(Sock := this.TCP.Connect(Server, Port))
+			return 0
 		
 		if Pass
 			this._SendRaw("PASS " Pass)
 		this._SendRaw("NICK " this.Nick)
 		this._SendRaw("USER " this.User " 0 * :" this.Name)
+		
+		return Sock
 	}
 	
 	_HandleRecv(Skt)
@@ -41,6 +52,12 @@
 			this._OnRecv(Segment)
 		
 		return
+	}
+	
+	_HandleDisc(Skt)
+	{
+		this := this.Parent
+		this.onDisconnect(Skt)
 	}
 	
 	_OnRecv(Data)
@@ -315,8 +332,6 @@
 		return this._SendRaw(Text, RecvHeader, Header, Suffix)
 	}
 	
-	CanJoin := false
-	ChannelBuffer := []
 	SendJOIN(Channels*)
 	{
 		for each, Channel in Channels
