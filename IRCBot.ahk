@@ -179,7 +179,10 @@ if RegexMatch(Message, "^/([^ ]+)(?: (.+))?$", Match)
 	else if (Match1 = "nick")
 		IRC.SendNICK(Match2)
 	else if (Match1 = "quit")
+	{
 		IRC.SendQUIT(Match2)
+		ExitApp
+	}
 	else
 		IRC.Log("ERROR: Unkown command " Match1)
 	return
