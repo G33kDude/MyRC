@@ -15,6 +15,11 @@ for Alias, Repl in Settings.Aliases
 			Run(A_AhkPath, "plugins\" Match1 ".ahk", Param)
 			ExitApp
 		}
+		else if (Match1 = "Say")
+		{
+			Chat(Channel, Match2)
+			ExitApp
+		}
 	}
 }
 
