@@ -40,7 +40,7 @@ if !(Settings := Ini_Read(SettingsFile))
 	8 = EightBall
 	Eight = EightBall
 	Upgrade = Update
-	Source = Template My source can be found at http://github.com/G33kDude/MyRC
+	Source = Say My source can be found at http://github.com/G33kDude/MyRC
 	Stuff =
 	Stuffstats =
 	)
