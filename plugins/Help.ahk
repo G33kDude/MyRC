@@ -15,7 +15,7 @@ if (PlugName && FileExist("plugins\" PlugName ".ahk"))
 	FileRead, PlugFile, plugins\%PlugName%.ahk
 	if RegexMatch(PlugFile, PlugRE, Match)
 	{
-		Desc := RegExReplace(MatchDesc, "m)^\s+", "") ; Trim leading whitespace
+		Desc := RegExReplace(MatchDesc, "`am)^\s+", "") ; Trim leading whitespace
 		Chat(Channel, Desc)
 		ExitApp
 	}
