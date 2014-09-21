@@ -367,7 +367,7 @@
 	_ByteSplit(String, Bytes, encoding="UTF-8")
 	{
 		Out := []
-		while String
+		while (String != "") ; We want to be able to chat 0
 		{
 			VarSetCapacity(x, Bytes, 0)
 			StrPut(String, &x, Bytes, Encoding)
