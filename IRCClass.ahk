@@ -273,7 +273,7 @@
 	{
 		Max := 510 - this._ByteCount(RecvPrefix, Encoding) - this._ByteCount(Suffix, Encoding)
 		Out := []
-		Loop, Parse, Message, `n, `r
+		Loop, Parse, Message, `r`n, `r`n
 		{
 			for each, Split in this._ByteSplit(A_LoopField, Max)
 			{
