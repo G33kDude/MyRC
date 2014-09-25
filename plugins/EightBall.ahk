@@ -5,5 +5,10 @@
 */
 
 Eightball := StrSplit(Settings.EightBall, ",")
-Chat(Channel, EightBall[Rand(1, EightBall.MaxIndex())])
+Sum := 0
+for each, Char in StrSplit(PRIVMSG.Nick . Plugin.Param)
+	Sum += Asc(Char)
+Sum := Mod(Sum, EightBall.MaxIndex()) + 1
+Chat(Channel, EightBall[Sum])
+;Chat(Channel, EightBall[Rand(1, EightBall.MaxIndex())])
 ExitApp
