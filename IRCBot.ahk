@@ -1,5 +1,5 @@
 ﻿#NoEnv
-#Include %A_LineFile%\..
+#Include %A_LineFile%\..\lib
 #Include Socket.ahk
 #Include IRCClass.ahk
 #Include Class_RichEdit.ahk
