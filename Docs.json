@@ -197,7 +197,7 @@
 	"assigning values to variables" : "docs\/Variables.htm#AssignOp",
 	"ATan()" : "docs\/Functions.htm#ATan",
 	"attributes of files and folders" : "docs\/commands\/FileGetAttrib.htm",
-	"auto-execute section" : "docs\/Scripts.htm",
+	"auto-execute section" : "docs\/Scripts.htm#auto",
 	"auto-replace text as you type it" : "docs\/Hotstrings.htm",
 	"AutoIt v2 compatibility" : "docs\/misc\/AutoIt2Compat.htm",
 	"AutoTrim" : "docs\/commands\/AutoTrim.htm",
