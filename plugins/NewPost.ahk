@@ -17,6 +17,9 @@ xml.loadXML(Rss)
 if !entries := xml.selectNodes("/feed/entry")
 	ExitApp ; Malformed xml
 
+if !InStr(FileExist("temp"), "D")
+	FileCreateDir, temp
+
 Previous := []
 for each, Url in StrSplit(FileOpen("temp\prevrss.txt", "r").Read(), "`n", "`r")
 	Previous[Url] := True
