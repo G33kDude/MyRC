@@ -5,5 +5,5 @@
 */
 
 Url := (Channel = "#ahk" ? "http://ahk.us.to/" : "http://ahk.uk.to/")
-Chat(Channel, "Please use the unofficial AutoHotkey pastebin to share code: " Url)
+Chat(Channel, "Please share your code on the unofficial AutoHotkey pastebin: " Url)
 ExitApp
