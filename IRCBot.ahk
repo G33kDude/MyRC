@@ -349,6 +349,12 @@ class Bot extends IRC
 		}
 	}
 	
+	OnPING(Nick,User,Host,Cmd,Params,Msg,Data)
+	{
+		Param := Json_FromObj({"Channel":"#ahkscript"})
+		Run(A_AhkPath, "plugins\NewPost.ahk", Param)
+	}
+	
 	OnDisconnect(Socket)
 	{
 		ChannelBuffer := []
