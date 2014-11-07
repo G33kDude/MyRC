@@ -30,6 +30,11 @@ wget http://ahkscript.org/download/ahk-u32.zip
 unzip ahk-u32.zip
 ```
 
+To install screen
+```
+apt-get install screen
+```
+
 -----
 
 If you don't have a monitor or X display set up (running headless)
@@ -53,3 +58,12 @@ To run MyRC
 export DISPLAY=:0
 screen -S MyRC -d -m wine AutoHotkey.exe IRCBot.ahk
 ```
+
+-----
+-----
+
+Notes:
+<ul>
+    <li>The first time you run IRCBot, a Settings.ini will be generated. You will need to edit this file with your information.</li>
+    <li>The first time the bot receives a PING, it will check the forum's RSS feed, and spam the chat with all 16 messages as the cache has not yet been filled. This may be changed in later updates.</li>
+</ul>
