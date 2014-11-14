@@ -60,6 +60,21 @@ screen -S MyRC -d -m wine AutoHotkey.exe IRCBot.ahk
 ```
 
 -----
+
+The sandbox plugin allows you to run autohotkey code through the IRC.
+There are two known problems with it: It has access to clipboard manipulation, and it has access to A_TimeIdle/Physical.
+If these are not big problems for you, go for it.
+
+How to set up the sandbox plugin:
+
+<ol>
+    <li>Download the sandbox dll from http://www.golguppe.com/autohotkey/sandbox/ahksandboxansi.dll</li>
+    <li>Make double sure you've put the dll in a folder where it will never be moved. Moving it will break all sorts of things, and they aren't always easy to fix.</li>
+    <li>Run `wine regsvr32 ahksandboxansi.dll` (or if you're on windows run `regsvr32 ahksandboxansi.dll` as admin)</li>
+    <li>Move the sandbox plugin from the disabled folder back into the normal plugin folder</li>
+</ol>
+
+-----
 -----
 
 Notes:
