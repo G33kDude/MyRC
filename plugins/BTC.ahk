@@ -5,55 +5,15 @@
 */
 
 Currency := Plugin.Param
-Rates := GetBTC()
-if !Rates.HasKey(Currency)
-	Currency := "USD"
 
-Chat(Channel, "One Bitcoin is currently worth " Rates[Currency, "24h"] " " Currency)
+if Currency not in usd,rur,eur,cnh,gbp
+	Currency := "usd"
+
+http := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+http.open("GET", "https://btc-e.com/api/3/ticker/btc_" Currency, false)
+http.Send()
+
+Rate := Json_ToObj(http.responseText)["btc_" currency].last
+
+Chat(Channel, "One Bitcoin is currently worth " Rate " " Currency)
 ExitApp
-
-; Fetch latest bitcoin info from bitcoincharts api
-GetBTC()
-{
-	static API := "http://api.bitcoincharts.com/v1/weighted_prices.json"
-	
-	if !InStr(FileExist("temp"), "D")
-		FileCreateDir, temp
-	
-	; Read the last bitcoin data from file.
-	; If there is data, load it
-	; If not, use a dummy to indicate we should fetch new data
-	FileRead, File, temp\LastBTC.txt
-	if File
-		File := Json_ToObj(File)
-	else
-		File := [0,"Error"]
-	
-	LastTime := File[1], Elapsed := A_Now
-	EnvSub, Elapsed, LastTime, Hours
-	
-	; If more than 1 hour has elapsed, or there is no saved last time
-	if (Elapsed || !LastTime)
-	{
-		ToolTip, Fetching new prices
-		
-		; Fetch the prices
-		BTC := ComObjCreate("WinHttp.WinHttpRequest.5.1")
-		BTC.Open("GET", API, False)
-		BTC.Send()
-		BTC := BTC.ResponseText
-		
-		; Decode the prices
-		Rates := Json_ToObj(BTC)
-		
-		; Save the prices to file
-		FileDelete, temp\LastBTC.txt
-		FileAppend, [%A_Now%`, %BTC%], temp\LastBTC.txt
-		
-		ToolTip
-	}
-	else ; Read rates from file
-		Rates := File[2]
-	
-	return Rates
-}
