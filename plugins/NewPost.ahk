@@ -59,11 +59,14 @@ Write := ""
 for Url in Previous
 	Write .= "`r`n" Url
 FileOpen("temp\prevrss.txt", "w").Write(SubStr(Write, 3))
-
+MsgBox, % Out
 if Out
-	Chat(Channel, Out)
-else if PRIVMSG
-	Chat(Channel, "No posts")
+{
+	if PRIVMSG
+		Chat(Channel, Out)
+	else
+		IRC.SendNOTICE("#Sjc_Bot", Out)
+}
 ExitApp
 
 GetRss(Feed, UserAgent="")

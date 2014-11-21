@@ -19,7 +19,16 @@ if (Settings.Bitly.login)
 
 Chat(Channel, Text)
 {
-	TCP := new SocketTCP()
-	TCP.Connect("localhost", 26656)
-	TCP.SendText(Channel "," Text)
+	IRC.Chat(Channel, Text)
+}
+
+class IRC
+{
+	static _ := IRC := new IRC() ; Automatically initialize base object
+	__Call(Name, Params*)
+	{
+		TCP := new SocketTCP()
+		TCP.Connect("localhost", 26656)
+		TCP.SendText(Json_FromObj({MethodName: Name, Params: Params}))
+	}
 }

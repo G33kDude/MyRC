@@ -133,10 +133,18 @@ OnTCPAccept()
 	global myTcp
 	newTcp := myTcp.accept()
 	Text := newTcp.recvText()
-	Comma := InStr(Text, ",")
-	Channel := Trim(SubStr(Text, 1, Comma-1))
-	Message := Trim(SubStr(Text, Comma+1))
-	IRC.Chat(Channel, Message)
+	
+	Obj := Json_ToObj(Text)
+	
+	if !(ParamCount := IsFunc(IRC[Obj.MethodName]))
+		return IRC.log("ERROR: Unkown method " Obj.MethodName)
+	ParamCount -= 2 ; Subtract 1 for IsFunc, and 1 for 'this'
+	
+	if !(Obj.Params.MaxIndex() == ParamCount)
+		return IRC.Log("ERROR: Invalid number of params: " Obj.Params.MaxIndex() "/" ParamCount)
+	
+	IRC[Obj.MethodName].(IRC, Obj.Params*)
+	
 	newTcp.__Delete()
 }
 
