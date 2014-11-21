@@ -428,6 +428,11 @@ class Bot extends IRC
 	{
 		AppendLog(Message)
 	}
+	
+	AppendChat(Message)
+	{
+		AppendChat(Message)
+	}
 }
 
 AppendLog(Message)
