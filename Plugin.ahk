@@ -30,5 +30,6 @@ class IRC
 		TCP := new SocketTCP()
 		TCP.Connect("localhost", 26656)
 		TCP.SendText(Json_FromObj({MethodName: Name, Params: Params}))
+		return Json_ToObj(TCP.recvText()).return
 	}
 }

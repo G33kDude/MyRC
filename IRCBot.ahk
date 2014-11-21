@@ -143,7 +143,8 @@ OnTCPAccept()
 	if !(Obj.Params.MaxIndex() == ParamCount)
 		return IRC.Log("ERROR: Invalid number of params: " Obj.Params.MaxIndex() "/" ParamCount)
 	
-	IRC[Obj.MethodName].(IRC, Obj.Params*)
+	retval := IRC[Obj.MethodName].(IRC, Obj.Params*)
+	newTcp.sendText(Json_FromObj({return: retval}))
 	
 	newTcp.__Delete()
 }
