@@ -62,7 +62,7 @@ if !(Settings := Ini_Read(SettingsFile))
 	ExitApp
 }
 
-if IsObject(Settings.Bitly.login)
+if (Settings.Bitly.login)
 	Shorten(Settings.Bitly.login, Settings.Bitly.apiKey)
 
 DispatchPollingPlugins()
