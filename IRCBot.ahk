@@ -62,8 +62,10 @@ if !(Settings := Ini_Read(SettingsFile))
 	ExitApp
 }
 
-if (Settings.Bitly.login)
+if IsObject(Settings.Bitly.login)
 	Shorten(Settings.Bitly.login, Settings.Bitly.apiKey)
+
+DispatchPollingPlugins()
 
 Server := Settings.Server
 Nicks := StrSplit(Server.Nicks, ",", " `t")
@@ -147,6 +149,25 @@ OnTCPAccept()
 	newTcp.sendText(Json_FromObj({return: retval}))
 	
 	newTcp.__Delete()
+}
+
+DispatchPollingPlugins(Params*)
+{
+	static ThisFunc := Func("DispatchPollingPlugins")
+	global SettingsFile
+	
+	if !Params.MaxIndex()
+	{
+		if !(Settings := Ini_Read(SettingsFile))
+			Throw Exception("There was a problem reading your Settings.ini file")
+		for Plugin, Params in Settings.Timers
+		{
+			Params := Json_ToObj(Params)
+			SetTimer(ThisFunc, Params.Remove(1), Plugin, Params*)
+		}
+	}
+	else
+		Run(A_AhkPath, "plugins\" Params.Remove(1) ".ahk", Params*)
 }
 
 GuiSize:
@@ -370,8 +391,7 @@ class Bot extends IRC
 	
 	OnPING(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
-		Param := Json_FromObj({"Channel":"#ahkscript"})
-		Run(A_AhkPath, "plugins\NewPost.ahk", Param)
+		;Run(A_AhkPath, "plugins\NewPost.ahk")
 	}
 	
 	OnDisconnect(Socket)

@@ -115,3 +115,54 @@ RegExEscape(String)
 {
 	return "\Q" RegExReplace(String, "\\E", "\E\\E\Q") "\E"
 }
+
+SetTimer(Func, Period, Params*)
+{
+	static Times := []
+	
+	for Time, Timers in Times
+	{
+		for Index, Timer in Timers
+		{
+			if (Func == Timer.Func)
+			{
+				; Don't worry about messing up the loop, we're gonna break
+				Timers.Remove(Index)
+				
+				; No more timers? Don't bother iterating over it later
+				if !Timers.MaxIndex()
+					Times.Remove(Time, "") ; Don't adjust other keys
+				
+				; Since we always do this check, there'll never be multiple
+				; instances of the same func, so breaking is fine
+				break, 2
+			}
+		}
+	}
+	
+	NewTime := A_TickCount + Abs(Period)
+	if !IsObject(Times[NewTime])
+		Times[NewTime] := []
+	Times[Newtime].Insert({Period: Period, Func: Func, Params: Params})
+	
+	MyTimer:
+	TickCount := A_TickCount
+	; Temp vars because race conditions
+	While (Time := Times.MinIndex()) < TickCount
+	{
+		for each, Timer in Times.Remove()
+		{
+			Timer.Func.(Timer.Params*)
+			
+			if (Timer.Period >= 0) ; If a positive timer, set it again later
+			{
+				NewTime := TickCount + Timer.Period
+				if !IsObject(Times[NewTime])
+					Times[NewTime] := []
+				Times[Newtime].Insert({Period: Timer.Period, Func: Timer.Func, Params: Timer.Params})
+			}
+		}
+	}
+	SetTimer, MyTimer, % -(Times.MinIndex() - TickCount)
+	return
+}
