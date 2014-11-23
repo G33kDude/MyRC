@@ -52,6 +52,9 @@ if !(Settings := Ini_Read(SettingsFile))
 	Forums = Say AutoHotkey forum: http://ahkscript.org/boards/
 	Stuff =
 	Stuffstats =
+	
+	[Timers]
+	NewPost = [60000, "{\"channel\":\"#ahkscript\"}"]
 	)
 	
 	File := FileOpen(SettingsFile, "w")
