@@ -119,50 +119,68 @@ RegExEscape(String)
 SetTimer(Func, Period, Params*)
 {
 	static Times := []
+	WasCritical := A_IsCritical
+	Critical ; Prevent race conditions
 	
+	; --- Erase duplicate timer (if any) ---
+	; (I could use a second object to speed this up)
 	for Time, Timers in Times
 	{
 		for Index, Timer in Timers
 		{
 			if (Func == Timer.Func)
 			{
-				; Don't worry about messing up the loop, we're gonna break
 				Timers.Remove(Index)
-				
-				; No more timers? Don't bother iterating over it later
 				if !Timers.MaxIndex()
 					Times.Remove(Time, "") ; Don't adjust other keys
-				
-				; Since we always do this check, there'll never be multiple
-				; instances of the same func, so breaking is fine
 				break, 2
 			}
 		}
 	}
 	
-	NewTime := A_TickCount + Abs(Period)
-	if !IsObject(Times[NewTime])
-		Times[NewTime] := []
-	Times[Newtime].Insert({Period: Period, Func: Func, Params: Params})
+	; --- Add to list of times ---
+	if (Period)
+	{
+		NewTime := A_TickCount + Abs(Period)
+		if !IsObject(Times[NewTime])
+			Times[NewTime] := []
+		Times[Newtime].Insert({Period: Period, Func: Func, Params: Params})
+	}
+	
+	; --- Set a new timer if necessary ---
+	if (NewTime == Times.MinIndex())
+		SetTimer, MyTimer, % -(Times.MinIndex() - TickCount)
+	
+	Critical, %WasCritical%
+	return
+	
+	
 	
 	MyTimer:
 	TickCount := A_TickCount
-	; Temp vars because race conditions
-	While (Time := Times.MinIndex()) < TickCount
+	Print(TickCount)
+	; --- Get timer and delete entry if empty ---
+	MinIndex := Times.MinIndex() ; Performance
+	Timers := Times[MinIndex]
+	Timer := Timers.Remove(1) ; First defined first serve. I might want to reverse it while setting for less overhead when calling
+	if (!Timers.MaxIndex())
+		Times.Remove(MinIndex)
+	
+	; --- Set another timer if period is positive ---
+	if (Timer.Period > 0)
 	{
-		for each, Timer in Times.Remove()
-		{
-			Timer.Func.(Timer.Params*)
-			
-			if (Timer.Period >= 0) ; If a positive timer, set it again later
-			{
-				NewTime := TickCount + Timer.Period
-				if !IsObject(Times[NewTime])
-					Times[NewTime] := []
-				Times[Newtime].Insert({Period: Timer.Period, Func: Timer.Func, Params: Timer.Params})
-			}
-		}
+		NewTime := TickCount + Timer.Period
+		if !IsObject(Times[NewTime])
+			Times[NewTime] := []
+		Times[NewTime].Insert(Timer)
 	}
+	
+	; --- Set next timer ---
+	if (Times.MinIndex()-TickCount < 0)
+		throw Exception("I'm not sure what happened here")
 	SetTimer, MyTimer, % -(Times.MinIndex() - TickCount)
+	
+	; --- Call function ---
+	Timer.Func.(Timer.Params*)
 	return
 }
