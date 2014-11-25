@@ -158,7 +158,7 @@ SetTimer(Func, Period, Params*)
 	
 	MyTimer:
 	TickCount := A_TickCount
-	Print(TickCount)
+	
 	; --- Get timer and delete entry if empty ---
 	MinIndex := Times.MinIndex() ; Performance
 	Timers := Times[MinIndex]
