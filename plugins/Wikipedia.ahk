@@ -1,7 +1,7 @@
 ﻿#Include %A_LineFile%\..\..\Plugin.ahk
 /*
 	Usage: Wikipedia <Search>
-	Desc: Desc: Gets the last couple entries from the AHKScript forum. MaxEntries to return defaults to 4, and is limited to 8.
+	Desc: Searches wikipedia for a page and returns the first sentence plus a link
 */
 
 UserAgent := "GeekBot by GeekDude (Contact me on GitHub: https://github.com/G33kDude/MyRC)"
