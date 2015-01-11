@@ -12,5 +12,5 @@ http.Open("GET", VersionFile, False)
 http.Send()
 Version := SubStr(http.ResponseText, 1, 12)
 
-Chat(Channel, "The latest maintained AutoHotkey installer v" Version ": " Installer)
+Chat(Channel, "The latest maintained stable AutoHotkey installer v" Version ": " Installer)
 ExitApp
