@@ -6,5 +6,5 @@
 
 Options := StrSplit(Plugin.Param, " ")
 Random, Rand, 1, Options.MaxIndex()
-Chat(Channel, Options[Rand])
+Chat(Channel, "Your selected item: " Options[Rand])
 ExitApp
