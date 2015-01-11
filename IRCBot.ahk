@@ -1,5 +1,6 @@
 ﻿#NoEnv
 #Include %A_LineFile%\..\lib
+#Include Bind.ahk
 #Include Socket.ahk
 #Include IRCClass.ahk
 #Include Class_RichEdit.ahk
@@ -154,19 +155,19 @@ OnTCPAccept()
 	newTcp.__Delete()
 }
 
-DispatchPollingPlugins(Params*)
+DispatchPollingPlugins(Params*) ; Think of a better name for this
 {
-	static ThisFunc := Func("DispatchPollingPlugins")
-	global SettingsFile
+	global SettingsFile ; Make it global settings so I don't have to read the file again
 	
 	if !Params.MaxIndex()
 	{
-		if !(Settings := Ini_Read(SettingsFile))
+		if !(Settings := Ini_Read(SettingsFile)) ; See comment on global
 			Throw Exception("There was a problem reading your Settings.ini file")
-		for Plugin, Params in Settings.Timers
+		for Plugin, Json in Settings.Timers
 		{
-			Params := Json_ToObj(Params)
-			SetTimer(ThisFunc, Params.Remove(1), Plugin, Params*)
+			Params := Json_ToObj(Json) ; Make sure to keep track of how Bind will be implemented in the final release
+			Tmp := Bind(A_ThisFunc, Plugin, Json) ; Keep track of these so I can disable the timer if we run this function a second time
+			SetTimer, %Tmp%, % Params.Period ? Params.Period : -0
 		}
 	}
 	else
