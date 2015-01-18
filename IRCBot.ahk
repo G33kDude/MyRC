@@ -1,4 +1,5 @@
-﻿#NoEnv
+#NoEnv
+;#Include Settings.ini
 #Include %A_LineFile%\..\lib
 #Include Bind.ahk
 #Include Socket.ahk
@@ -55,7 +56,7 @@ if !(Settings := Ini_Read(SettingsFile))
 	Stuffstats =
 	
 	[Timers]
-	NewPost = [60000, "{\"channel\":\"#ahkscript\"}"]
+	NewPost = {"Period": 60000, "Channel": "#ahkscript"}
 	)
 	
 	File := FileOpen(SettingsFile, "w")
@@ -157,12 +158,10 @@ OnTCPAccept()
 
 DispatchPollingPlugins(Params*) ; Think of a better name for this
 {
-	global SettingsFile ; Make it global settings so I don't have to read the file again
+	global Settings
 	
 	if !Params.MaxIndex()
 	{
-		if !(Settings := Ini_Read(SettingsFile)) ; See comment on global
-			Throw Exception("There was a problem reading your Settings.ini file")
 		for Plugin, Json in Settings.Timers
 		{
 			Params := Json_ToObj(Json) ; Make sure to keep track of how Bind will be implemented in the final release
