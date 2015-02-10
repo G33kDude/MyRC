@@ -1,11 +1,11 @@
-﻿#Include %A_LineFile%\..\..\lib
+#Include ..\lib
+#Include IRCClass.ahk
 #Include Socket.ahk
 #Include Utils.ahk
-#Include IRCClass.ahk
-; ComObjError(0)
 
-SetWorkingDir, %A_LineFile%\..\..
-MsgBox, % A_WorkingDir
+SetWorkingDir, ..
+
+; ComObjError(0)
 
 Previous := []
 for each, Url in StrSplit(FileOpen("temp\prevredditrss.txt", "r").Read(), "`n", "`r")

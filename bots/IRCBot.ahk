@@ -1,14 +1,16 @@
 #NoEnv
-;#Include Settings.ini
-#Include %A_LineFile%\..\lib
+;#Include ..\Settings.ini
+#Include ..\lib
 #Include Bind.ahk
-#Include Socket.ahk
-#Include IRCClass.ahk
 #Include Class_RichEdit.ahk
+#Include IRCClass.ahk
 #Include Json.ahk
+#Include Socket.ahk
 #Include Utils.ahk
 
-SettingsFile := A_ScriptDir "\Settings.ini"
+SetWorkingDir, ..
+
+SettingsFile := "Settings.ini"
 
 if !(Settings := Ini_Read(SettingsFile))
 {
