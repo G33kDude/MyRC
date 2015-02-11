@@ -1,9 +1,11 @@
+#NoEnv
+SetBatchLines, -1
+SetWorkingDir, ..
+
 #Include ..\lib
 #Include IRCClass.ahk
 #Include Socket.ahk
 #Include Utils.ahk
-
-SetWorkingDir, ..
 
 Feed := "http://ahkscript.org/boards/feed.php"
 UserAgent := "Mozilla/5.0 (X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/21.0"

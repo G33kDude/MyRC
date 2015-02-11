@@ -1,5 +1,7 @@
 #NoEnv
-;#Include ..\Settings.ini
+SetBatchLines, -1
+SetWorkingDir, ..
+
 #Include ..\lib
 #Include Bind.ahk
 #Include Class_RichEdit.ahk
@@ -7,8 +9,6 @@
 #Include Json.ahk
 #Include Socket.ahk
 #Include Utils.ahk
-
-SetWorkingDir, ..
 
 SettingsFile := "Settings.ini"
 
