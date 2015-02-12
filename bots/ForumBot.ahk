@@ -78,6 +78,11 @@ GetNewPosts()
 	; I can use such an "unsafe" regex because user inputted < and > are escaped as &lt; and &gt;
 	Rss := RegExReplace(GetRss(Feed, UserAgent), "s)<feed[^>]*>(.*)</feed>.*$", "<feed>$1</feed>")
 	
+	; Escape special characters before loading into the xml parser
+	Loop, 31
+		if A_Index not in 10,31 ; Skip newlines
+			StringReplace, Rss, Rss, % Chr(A_Index), &#%A_Index%;, All
+	
 	xml := ComObjCreate("MSXML2.DOMDocument")
 	xml.loadXML(Rss)
 	if !entries := xml.selectNodes("/feed/entry")
