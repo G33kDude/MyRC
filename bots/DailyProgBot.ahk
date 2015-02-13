@@ -13,8 +13,8 @@ UserAgent := "DailyProgBot by /u/G33kDude (http://github.com/G33kDude/MyRC)"
 Channel := "#reddit-dailyprogrammer"
 
 ChallengeRE := "i)^\[([\d-]+)\] Challenge #(\d+) \[(.).*?\] (.+)$"
-ChallengeUrlRE := ["i)^.+comments/(.+?)/.+$", "https://reddit.com/r/dailyprogrammer/comments/$1"]
 
+PostUrlRE := ["i)^.+comments/(.+?)/.+$", "https://redd.it/$1"]
 CommentTitleRE := ["i)^(\S+).+?#(\d+).+?\[(.).*?\]", "$1 on #$2$3:"]
 CommentUrlRE := ["^.+/(.+?)/.+?/(.+)$", "https://reddit.com/comments/$1/-/$2?context=3"]
 
@@ -35,11 +35,13 @@ Poll:
 Out := ""
 for each, Post in GetItems(HttpRequest(PostFeed), PreviousPosts)
 {
-	Out .= Format(PostFormat, Post.title, Post.Url)
+	Url := RegExReplace(Post.Url, PostUrlRE*)
+	Out .= Format(PostFormat, Post.title, Url) "`n"
 	if RegExMatch(Post.Title, ChallengeRE, Match)
 	{
-		Url := RegExReplace(Post.Url, ChallengeUrlRE*)
-		Out .= "Changing topic to: #" Match2 . Match3 " " Url "`n"
+		; Send off for a topic so we can modify it
+		MyBot.NewChallenge := "#" Match2 . Match3 " " Url
+		MyBot._SendTCP("TOPIC " Channel "`r`n")
 	}
 }
 
@@ -56,6 +58,18 @@ return
 
 class IRCBot extends IRC
 {
+	; RPL_TOPIC
+	On332(Nick, User, Host, Cmd, Params, Msg, Data)
+	{
+		if this.NewChallenge
+		{
+			; Topic received, modify it
+			NewTopic := RegExReplace(Msg, "\|\s*#\d+.*?\|", "| " this.NewChallenge " |")
+			if (NewTopic != Msg)
+				this._SendTCP("TOPIC " Params[2] " :" NewTopic "`r`n")
+		}
+	}
+	
 	OnPRIVMSG(Nick, User, Host, Cmd, Params, Msg, Data)
 	{
 		if (Trim(Msg) = "!source")
