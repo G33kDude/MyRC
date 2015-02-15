@@ -33,7 +33,7 @@ if Docs.HasKey(Plugin.Match)
 }
 else
 {
-	Plugin.Name := "Search", Plugin.Param := "site:ahkscript.org/boards/ OR site:autohotkey.com/board/ " Plugin.Match
+	Plugin.Name := "Search", Plugin.Param := "site:ahkscript.org/ OR site:autohotkey.com/board/ " Plugin.Match
 	Run(A_AhkPath, "plugins\Search.ahk", Json_FromObj({"PRIVMSG":PRIVMSG,"Channel":Channel,"Plugin":Plugin}))
 }
 ExitApp
