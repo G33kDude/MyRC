@@ -14,7 +14,7 @@ Channel := "#reddit-dailyprogrammer"
 
 ChallengeRE := "i)^\[([\d-]+)\] Challenge #(\d+) \[(.).*?\] (.+)$"
 
-PostUrlRE := ["i)^.+comments/(.+?)/.+$", "https://redd.it/$1"]
+PostUrlRE := ["i)^.+comments/(.+?)/.+$", "http://redd.it/$1"]
 CommentTitleRE := ["i)^(\S+).+?#(\d+).+?\[(.).*?\]", "$1 on #$2$3:"]
 CommentUrlRE := ["^.+/(.+?)/.+?/(.+)$", "https://reddit.com/comments/$1/-/$2?context=3"]
 
