@@ -66,11 +66,15 @@ Shorten(LongUrl, SetKey="")
 	. "&longUrl=" UriEncode(Trim(LongUrl, " `r`n`t"))
 	. "&format=txt"
 	
-	http.Open("GET", Url, False), http.Send()
-	ShortUrl := Trim(http.responseText, " `r`n`t")
-	Shortened.Insert(LongUrl, ShortUrl)
-	
-	return ShortUrl
+	try
+	{
+		http.Open("GET", Url, False), http.Send()
+		ShortUrl := Trim(http.responseText, " `r`n`t")
+		Shortened.Insert(LongUrl, ShortUrl)
+		return ShortUrl
+	}
+	catch
+		return LongUrl
 }
 
 Ini_Read(FileName)
