@@ -1,8 +1,8 @@
 #NoEnv
 SetBatchLines, -1
-SetWorkingDir, ..
+SetWorkingDir, %A_ScriptDir%\..
 
-#Include ..\lib
+#Include %A_ScriptDir%\..\lib
 #Include IRCClass.ahk
 #Include Socket.ahk
 #Include Utils.ahk
