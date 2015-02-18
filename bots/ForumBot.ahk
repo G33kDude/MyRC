@@ -23,9 +23,14 @@ Tutoriales
 Otras Utilidades y Recursos
 )
 
-Shorten("ahk4me", "NOTTHEAPIKEY")
+Settings := Ini_Read("Settings.ini")
+Server := Settings.Server
+
+if (Settings.Bitly.login)
+	Shorten(Settings.Bitly.login, Settings.Bitly.apiKey)
+
 MyBot := new IRCBot() ; Create a new instance of your bot
-MyBot.Connect("chat.freenode.net", 6667, "ForumBot", "GeekBot", "ForumBot", "NOTMYPASSWORD") ; Connect to an IRC server
+MyBot.Connect(Server.Addr, Server.Port, "ForumBot", Server.User, Server.Nick, Server.Pass) ; Connect to an IRC server
 MyBot.SendJOIN(Channel) ; Join a channel
 GetNewPosts()
 SetTimer, Poll, % 1 * 60 * 1000
