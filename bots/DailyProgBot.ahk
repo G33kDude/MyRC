@@ -18,8 +18,8 @@ PostUrlRE := ["i)^.+comments/(.+?)/.+$", "http://redd.it/$1"]
 CommentTitleRE := ["i)^(\S+).+?#(\d+).+?\[(.).*?\]", "$1 on #$2$3:"]
 CommentUrlRE := ["^.+/(.+?)/.+?/(.+)$", "https://reddit.com/comments/$1/-/$2?context=3"]
 
-PostFormat := Chr(3) "4{} - {}"
-CommentFormat := Chr(3) "3{} - {}"
+PostFormat := Chr(3) "04{} - {}"
+CommentFormat := Chr(3) "03{} - {}"
 
 Settings := Ini_Read("Settings.ini")
 MyBot := new IRCBot() ; Create a new instance of your bot
