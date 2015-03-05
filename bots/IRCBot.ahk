@@ -357,9 +357,18 @@ class Bot extends IRC
 		Channel := Params[1]
 		AppendChat(Channel " <" NickColor(Nick) "> " Msg)
 		
+		if (Nick == this.Nick)
+			return
+		
 		GreetEx := "i)^((?:" this.Greetings
 		. "),?)\s.*" RegExEscape(this.Nick)
 		. "(?P<Punct>[!?.]*).*$"
+		
+		if Msg contains % this.Nick
+		{
+			SoundBeep
+			TrayTip, % this.Nick, % "<" Nick "> " Msg
+		}
 		
 		; Greetings
 		if (RegExMatch(Msg, GreetEx, Match))
@@ -369,13 +378,11 @@ class Bot extends IRC
 		}
 		
 		; If it is being sent to us, but not by us
-		if (Channel == this.Nick && Nick != this.Nick)
-			this.SendPRIVMSG(Nick, "Hello to you, good sir")
-		
-		if Msg contains % this.Nick
+		if (Channel == this.Nick)
 		{
-			SoundBeep
-			TrayTip, % this.Nick, % "<" Nick "> " Msg
+			Channel := Nick
+			if !(Msg ~= "^" this.Trigger)
+				Msg := this.Trigger . Msg
 		}
 		
 		; If it is a command
@@ -385,7 +392,7 @@ class Bot extends IRC
 			File := "plugins\" Match1 ".ahk"
 			Param := Json_FromObj({"PRIVMSG":{"Nick":Nick,"User":User,"Host":Host
 			,"Cmd":Cmd,"Params":Params,"Msg":Msg,"Data":Data}
-			,"Plugin":{"Name":Match1,"Param":Match2,"Match":Match},"Channel":Params[1]})
+			,"Plugin":{"Name":Match1,"Param":Match2,"Match":Match},"Channel":Channel})
 			
 			if !FileExist(File)
 				File := "plugins\Default.ahk"
