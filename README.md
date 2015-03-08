@@ -6,8 +6,8 @@ v1.1.20.00
 
 Mentions:
 
-* [JSON parser](https://github.com/Jim-VxE/AHK-Lib-JSON_ToObj/) written by
-	VxE. Copyright info in Json.ahk
+* [JSON parser](github.com/cocobelgica/AutoHotkey-JSON) written by
+	@cocobelgica
 * [Socket library](http://www.autohotkey.com/board/topic/94376-) by Bentschi
 * Documentation search function modified from TheGood's [trigram matching
 	thread](http://www.autohotkey.com/board/topic/35990-)
