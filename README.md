@@ -6,8 +6,8 @@ v1.1.20.00
 
 Mentions:
 
-* [JSON parser](github.com/cocobelgica/AutoHotkey-JSON) written by
-	@cocobelgica
+* [JSON parser](http://github.com/cocobelgica/AutoHotkey-JSON) written by
+	[@cocobelgica](http://github.com/cocobelgica)
 * [Socket library](http://www.autohotkey.com/board/topic/94376-) by Bentschi
 * Documentation search function modified from TheGood's [trigram matching
 	thread](http://www.autohotkey.com/board/topic/35990-)
