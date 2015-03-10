@@ -1,4 +1,4 @@
-﻿#Include %A_LineFile%\.. ; Load icludes from the directory containing the file this line is in
+﻿#Include %A_ScriptDir%\lib ; Load includes from the lib directory
 #Include Socket.ahk ; Include the sockets library
 #Include IRCClass.ahk ; Include the IRC library
 
