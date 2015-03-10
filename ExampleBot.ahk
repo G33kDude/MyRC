@@ -7,16 +7,48 @@ MyBot.Connect("chat.freenode.net", 6667, "MyBotsName") ; Connect to an IRC serve
 MyBot.SendJOIN("#botters-test") ; Join a channel
 return
 
-class IRCBot extends IRC ; Create a bot that extends the irc library
+; Create a bot that extends the IRC library
+class IRCBot extends IRC
 {
-	onPRIVMSG(Nick,User,Host,Cmd,Params,Msg,Data) ; On PRIVMSG (IRC protocol name for incoming message)
+	; This function gets called on every PRIVMSG (IRC protocol name for incoming chat message)
+	onPRIVMSG(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
-		ToolTip, % "<" Nick "> " Msg ; Tooltip with the message
+		; In a PRIVMSG, the channel the message came from is stored as the first parameter.
+		; This line sets the variable "Channel" to the channel the message came from.
+		Channel := Params[1]
+		
+		; This displays a ToolTip in the form of "<Nick> Message person sent"
+		ToolTip, % "<" Nick "> " Msg
+		
+		; This is a regular expression command parser, for commands in the form "!Command [Parameter]"
+		if RegExMatch(Msg, "^\s*!(\S+)(?:\s+(.+?))?\s*$", Match)
+		{
+			Command := Match1 ; Command is the first capturing subpattern in the RegEx
+			Param := Match2 ; The parameter is the second capturing subpattern in the RegEx
+			
+			if (Command = "Hi")
+			{
+				; Send a chat message saying "Hello Nick!" in the channel that the command was triggered in
+				this.SendPRIVMSG(Channel, "Hello " Nick "!")
+			}
+			else if (Command = "Slap")
+			{
+				; Send a "/me slaps Parameter" to the channel the command was triggered in
+				this.SendACTION(Channel, "slaps " Param)
+			}
+			else if (Command = "Help")
+			{
+				; Send a helpful message to the person who triggered this command
+				this.SendPRIVMSG(Nick, "This is a helpful message!")
+			}
+		}
 	}
 	
-	Log(Data) ; This function gets called for every raw line from the server
+	; This function gets called for every raw line from the server
+	Log(Data)
 	{
-		Print(Data) ; Print the raw data
+		; Print the raw data received from the server
+		Print(Data)
 	}
 }
 
