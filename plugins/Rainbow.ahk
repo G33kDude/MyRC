@@ -1,7 +1,7 @@
 ﻿#Include %A_LineFile%\..\..\Plugin.ahk
 /*
-	Usage: BTC [Currency Name]
-	Desc: Shows the latest bitcoin exchange rates for a given currency, from bitcoincharts. Defaults to USD
+	Usage: Rainbow <Text>
+	Desc: Makes things more 04c07o08l09o11r12f02u06l
 */
 
 Colors := ["13", "04", "07", "08", "09", "11", "12", "02", "06"]
