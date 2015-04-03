@@ -17,8 +17,8 @@ else
 {
 	for each, Line in StrSplit(Out, "`n", "`r")
 	{
-		Chat(Channel, Line)
-		Sleep, 1000
+		Chat(Channel, Line == "" ? " " : Line)
+		Sleep, 200
 	}
 }
 ExitApp
