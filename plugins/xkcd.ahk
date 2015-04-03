@@ -8,7 +8,7 @@ UserAgent := "GeekBot by GeekDude (Contact me on GitHub: https://github.com/G33k
 Base := "https://ajax.googleapis.com/ajax/services/search/web?v=1.0"
 
 Google := ComObjCreate("WinHttp.WinHttpRequest.5.1")
-Google.Open("GET", Base "&q=" UriEncode("site:xkcd.com " Plugin.Param), false)
+Google.Open("GET", Base "&q=" UriEncode("site:xkcd.com -site:*.xkcd.com " Plugin.Param), false)
 Google.SetRequestHeader("User-Agent", UserAgent)
 Google.Send()
 
@@ -33,7 +33,7 @@ xkcd.Send()
 
 AltText := Json_ToObj(xkcd.responseText).alt
 if AltText
-	Chat(Channel, AltText " - " Shorten(Url))
+	Chat(Channel, AltText " - " Url)
 else
-	Chat(Channel, "Something went wrong. - " Shorten(Url))
+	Chat(Channel, "Something went wrong. - " Url)
 ExitApp
