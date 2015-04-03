@@ -72,8 +72,26 @@ class IRCBot extends IRC
 	
 	OnPRIVMSG(Nick, User, Host, Cmd, Params, Msg, Data)
 	{
-		if (Trim(Msg) = "!source")
-			this.SendPRIVMSG(Params[1], "https://github.com/G33kDude/MyRC/blob/Devlopment/bots/DailyProgBot.ahk")
+		global PostFeed, PostUrlRE, ChallengeRE, Channel
+		Msg := Trim(Msg)
+		if (Msg = "!source")
+			this.SendPRIVMSG(Params[1], "https://github.com/G33kDude/MyRC/blob/dev/bots/DailyProgBot.ahk")
+		else if (Msg = "!topic")
+		{
+			for each, Post in GetItems(HttpRequest(PostFeed), [])
+			{
+				Url := RegExReplace(Post.Url, PostUrlRE*)
+				Print(Post.Title)
+				if RegExMatch(Post.Title, ChallengeRE, Match)
+				{
+					Print("Going to change topic")
+					; Send off for a topic so we can modify it
+					this.NewChallenge := "#" Match2 . Match3 " " Url
+					this._SendTCP("TOPIC " Channel "`r`n")
+					Break
+				}
+			}
+		}
 	}
 	
 	Log(Data)
@@ -113,14 +131,14 @@ GetItems(Rss, Previous)
 	return Out
 }
 
-HttpRequest(Url, UserAgent="")
+HttpRequest(Url)
 {
+	global UserAgent
 	try
 	{
 		Http := ComObjCreate("WinHttp.WinHttpRequest.5.1")
 		Http.Open("GET", Url, False)
-		if UserAgent
-			Http.SetRequestHeader("User-Agent", UserAgent)
+		Http.SetRequestHeader("User-Agent", UserAgent)
 		Http.Send()
 		return Http.responseText
 	}
