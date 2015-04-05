@@ -3,7 +3,6 @@ SetBatchLines, -1
 SetWorkingDir, %A_ScriptDir%
 
 #Include %A_ScriptDir%\lib
-#Include Bind.ahk
 #Include Class_RichEdit.ahk
 #Include IRCClass.ahk
 #Include Json.ahk
@@ -18,11 +17,6 @@ if !(Settings := Ini_Read(SettingsFile))
 	MsgBox, There was a problem reading your Settings.ini file. Please fill in the newly generated Settings.ini
 	ExitApp
 }
-
-if (Settings.Bitly.login)
-	Shorten(Settings.Bitly.login, Settings.Bitly.apiKey)
-
-DispatchPollingPlugins()
 
 Server := Settings.Server
 Nicks := StrSplit(Server.Nicks, ",", " `t")
@@ -60,9 +54,9 @@ Gui, Show
 
 OnMessage(0x4E, "WM_NOTIFY")
 
-IRC := new Bot(Settings.Trigger, Settings.Greetings, Settings.Aliases, Nicks, Settings.ShowHex)
-IRC.Connect(Server.Addr, Server.Port, Nicks[1], Server.User, Server.Nick, Server.Pass)
-IRC.SendJOIN(StrSplit(Server.Channels, ",", " `t")*)
+MyBot := new Bot(Settings.Trigger, Settings.Greetings, Settings.Aliases, Nicks, Settings.ShowHex)
+MyBot.Connect(Server.Addr, Server.Port, Nicks[1], Server.User, Server.Nick, Server.Pass)
+MyBot.SendJOIN(StrSplit(Server.Channels, ",", " `t")*)
 
 myTcp := new SocketTCP()
 myTcp.bind("addr_any", 26656)
@@ -95,34 +89,17 @@ OnTCPAccept()
 	
 	Obj := Json_ToObj(Text)
 	
-	if !(ParamCount := IsFunc(IRC[Obj.MethodName]))
-		return IRC.log("ERROR: Unkown method " Obj.MethodName)
+	if !(ParamCount := IsFunc(MyBot[Obj.MethodName]))
+		return MyBot.log("ERROR: Unkown method " Obj.MethodName)
 	ParamCount -= 2 ; Subtract 1 for IsFunc, and 1 for 'this'
 	
 	if !(Obj.Params.MaxIndex() == ParamCount)
-		return IRC.Log("ERROR: Invalid number of params: " Obj.Params.MaxIndex() "/" ParamCount)
+		return MyBot.Log("ERROR: Invalid number of params: " Obj.Params.MaxIndex() "/" ParamCount)
 	
-	retval := IRC[Obj.MethodName].(IRC, Obj.Params*)
+	retval := MyBot[Obj.MethodName].(MyBot, Obj.Params*)
 	newTcp.sendText(Json_FromObj({return: retval}))
 	
 	newTcp.__Delete()
-}
-
-DispatchPollingPlugins(Params*) ; Think of a better name for this
-{
-	global Settings
-	
-	if !Params.MaxIndex()
-	{
-		for Plugin, Json in Settings.Timers
-		{
-			Params := Json_ToObj(Json) ; Make sure to keep track of how Bind will be implemented in the final release
-			Tmp := Bind(A_ThisFunc, Plugin, Json) ; Keep track of these so I can disable the timer if we run this function a second time
-			SetTimer, %Tmp%, % Params.Period ? Params.Period : -0
-		}
-	}
-	else
-		Run(A_AhkPath, "plugins\" Params.Remove(1) ".ahk", Params*)
 }
 
 GuiSize:
@@ -146,7 +123,7 @@ GuiControl, Move, Send, x%SendX% y%SendY% w45 h22
 return
 
 DropDown:
-IRC.UpdateListView()
+MyBot.UpdateListView()
 return
 
 Send:
@@ -158,36 +135,36 @@ GuiControlGet, Channel
 if RegexMatch(Message, "^/([^ ]+)(?: (.+))?$", Match)
 {
 	if (Match1 = "join")
-		IRC._SendRAW("JOIN " Match2)
+		MyBot._SendRAW("JOIN " Match2)
 	else if (Match1 = "me")
 	{
-		IRC.SendACTION(Channel, Match2)
-		AppendChat(Channel " * " NickColor(IRC.Nick) " " Match2)
+		MyBot.SendACTION(Channel, Match2)
+		AppendChat(Channel " * " NickColor(MyBot.Nick) " " Match2)
 	}
 	else if (Match1 = "part")
-		IRC.SendPART(Channel, Match2)
+		MyBot.SendPART(Channel, Match2)
 	else if (Match1 = "reload")
 		Reload
 	else if (Match1 = "say")
-		IRC.SendPRIVMSG(Channel, Match2)
+		MyBot.SendPRIVMSG(Channel, Match2)
 	else if (Match1 = "raw")
-		IRC._SendRaw(Match2)
+		MyBot._SendRaw(Match2)
 	else if (Match1 = "nick")
-		IRC.SendNICK(Match2)
+		MyBot.SendNICK(Match2)
 	else if (Match1 = "quit")
 	{
-		IRC.SendQUIT(Match2)
+		MyBot.SendQUIT(Match2)
 		ExitApp
 	}
 	else
-		IRC.Log("ERROR: Unkown command " Match1)
+		MyBot.Log("ERROR: Unkown command " Match1)
 	return
 }
 
 ; Send chat and handle it
-Messages := IRC.SendPRIVMSG(Channel, Message)
+Messages := MyBot.SendPRIVMSG(Channel, Message)
 for each, Message in Messages
-	IRC.onPRIVMSG(IRC.Nick,IRC.User,IRC.Host,"PRIVMSG",[Channel],Message,"")
+	MyBot.onPRIVMSG(MyBot.Nick,MyBot.User,MyBot.Host,"PRIVMSG",[Channel],Message,"")
 return
 
 GuiClose:
@@ -304,56 +281,16 @@ class Bot extends IRC
 	
 	onPRIVMSG(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
-		Channel := Params[1]
-		AppendChat(Channel " <" NickColor(Nick) "> " Msg)
+		AppendChat(Params[1] " <" NickColor(Nick) "> " Msg)
 		
 		if (Nick == this.Nick)
 			return
 		
-		GreetEx := "i)^((?:" this.Greetings
-		. "),?)\s.*" RegExEscape(this.Nick)
-		. "(?P<Punct>[!?.]*).*$"
-		
-		if Msg contains % this.Nick
+		if InStr(Msg, this.Nick)
 		{
 			SoundBeep
 			TrayTip, % this.Nick, % "<" Nick "> " Msg
 		}
-		
-		; Greetings
-		if (RegExMatch(Msg, GreetEx, Match))
-		{
-			this.Chat(Channel, Match1 " " Nick . MatchPunct)
-			return
-		}
-		
-		; If it is being sent to us, but not by us
-		if (Channel == this.Nick)
-		{
-			Channel := Nick
-			if !(Msg ~= "^" this.Trigger)
-				Msg := this.Trigger . Msg
-		}
-		
-		; If it is a command
-		if (RegexMatch(Msg, "^" this.Trigger "\K(\S+)(?:\s+(.+?))?\s*$", Match))
-		{
-			Match1 := RegExReplace(Match1, "i)[^a-z0-9]")
-			File := "plugins\" Match1 ".ahk"
-			Param := Json_FromObj({"PRIVMSG":{"Nick":Nick,"User":User,"Host":Host
-			,"Cmd":Cmd,"Params":Params,"Msg":Msg,"Data":Data}
-			,"Plugin":{"Name":Match1,"Param":Match2,"Match":Match},"Channel":Channel})
-			
-			if !FileExist(File)
-				File := "plugins\Default.ahk"
-			
-			Run(A_AhkPath, File, Param)
-		}
-	}
-	
-	OnPING(Nick,User,Host,Cmd,Params,Msg,Data)
-	{
-		;Run(A_AhkPath, "plugins\NewPost.ahk")
 	}
 	
 	OnDisconnect(Socket)
