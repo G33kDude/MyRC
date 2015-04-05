@@ -2,6 +2,7 @@
 
 ahk := ComObjCreate("AutoHotkey.Script.ANSISANDBOX")
 ahk.ahktextdll()
+ahk.addFile("SandboxLibrary.ahk")
 
 Script := Plugin.Param
 StringReplace, Script, Script, `;, `n, All
