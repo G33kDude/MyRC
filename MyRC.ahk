@@ -1,8 +1,8 @@
 #NoEnv
 SetBatchLines, -1
-SetWorkingDir, %A_ScriptDir%\..
+SetWorkingDir, %A_ScriptDir%
 
-#Include %A_ScriptDir%\..\lib
+#Include %A_ScriptDir%\lib
 #Include Bind.ahk
 #Include Class_RichEdit.ahk
 #Include IRCClass.ahk
@@ -14,58 +14,8 @@ SettingsFile := "Settings.ini"
 
 if !(Settings := Ini_Read(SettingsFile))
 {
-	Settings =
-	( LTrim
-	Greetings = Hey|Hi|Hello
-	EightBall = Yes,No,Maybe
-	Trigger = !
-	ShowHex = 0
-	
-	[Server]
-	Addr = chat.freenode.net
-	Port = 6667
-	Nicks = MyRC_Bot,MyRC
-	User =
-	Pass =
-	Channels = #ahkscript,#botters-test
-	
-	[Bitly]
-	login =
-	apiKey =
-	
-	[Wolfram]
-	AppID =
-	
-	[Aliases]
-	Script = Search site:ahkscript.org/boards/
-	Ahk = Search site:autohotkey.com/board/
-	Forum = Search site:ahkscript.org/boards/ OR site:autohotkey.com/board/
-	More = Search More
-	gDocs = Search site:ahkscript.org/docs/
-	Google = Search
-	joedf = Flip
-	g = Search
-	p = Pastebin
-	Paste = Pastebin
-	8 = EightBall
-	Eight = EightBall
-	Upgrade = Update
-	Install = Update
-	Installer = Update
-	Source = Say My source can be found at http://github.com/G33kDude/MyRC
-	Forums = Say AutoHotkey forum: http://ahkscript.org/boards/
-	Stuff =
-	Stuffstats =
-	
-	[Timers]
-	NewPost = {"Period": 60000, "Channel": "#ahkscript"}
-	)
-	
-	File := FileOpen(SettingsFile, "w")
-	File.Write(Settings), File.Close()
-	
+	FileCopy, DefaultSettings.ini, %SettingsFile%, 1
 	MsgBox, There was a problem reading your Settings.ini file. Please fill in the newly generated Settings.ini
-	
 	ExitApp
 }
 
