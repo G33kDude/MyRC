@@ -118,7 +118,7 @@ Print(Text)
 	StdOut.Write(Text "`n")
 }
 
-GetItems(Rss, Previous)
+GetItems(Rss, ByRef Previous)
 {
 	; Trim WINE breaking fluff
 	Rss := RegExReplace(Rss, "s).*?<feed[^>]*>(.*)</feed>.*?", "<feed>$1</feed>")
@@ -128,17 +128,21 @@ GetItems(Rss, Previous)
 	if !entries := xml.selectNodes("/rss/channel/item")
 		throw Exception("Malformed XML") ; Malformed xml
 	
+	NewPrevious := []
 	Out := []
 	While entry := entries.item[A_Index-1]
 	{
 		Url := entry.selectSingleNode("link").text
+		NewPrevious[Url] := True
 		if Previous.HasKey(Url)
 			Continue
 		Title := HtmlDecode(entry.selectSingleNode("title").text)
 		Desc := HtmlDecode(entry.selectSingleNode("description").text)
 		Out.Insert({"Url": Url, "Title": Title, "Desc": Desc})
-		Previous[Url] := True
 	}
+	
+	Previous := NewPrevious
+	
 	return Out
 }
 
