@@ -4,20 +4,27 @@ for Alias, Repl in Settings.Aliases
 {
 	if (Plugin.Name = Alias)
 	{
-		if !RegExMatch(Repl " " Plugin.Param, "^(\S+)(?:\s+(.+?))?\s*$", Match)
+		if !RegExMatch(Repl, "^(\S+)(?:\s+(.+?))?\s*$", Match)
 			ExitApp
 		Match1 := RegExReplace(Match1, "i)[^a-z0-9]")
 		if FileExist("plugins\" Match1 ".ahk")
 		{
-			Param := Json_FromObj({"PRIVMSG": PRIVMSG, "Channel": Channel
-			, "Plugin": {"Name": Plugin.Name, "Param": Match2}})
+			if Match2
+			{
+				Plugin.Params.Insert(1, Match2)
+				Plugin.Param := Match2 " " Plugin.Param
+			}
+			
+			Param := Json_FromObj({"PRIVMSG": PRIVMSG
+			, "Channel": Channel
+			, "Plugin": Plugin})
 			
 			Run(A_AhkPath, "plugins\" Match1 ".ahk", Param)
 			ExitApp
 		}
 		else if (Match1 = "Say")
 		{
-			Chat(Channel, Match2)
+			Chat(Channel, Match2 " " Plugin.Param)
 			ExitApp
 		}
 	}

@@ -392,7 +392,8 @@ class Bot extends IRC
 			File := "plugins\" Match1 ".ahk"
 			Param := Json_FromObj({"PRIVMSG":{"Nick":Nick,"User":User,"Host":Host
 			,"Cmd":Cmd,"Params":Params,"Msg":Msg,"Data":Data}
-			,"Plugin":{"Name":Match1,"Param":Match2,"Match":Match},"Channel":Channel})
+			,"Plugin":{"Name":Match1,"Param":Match2,"Params":[Match2],"Match":Match}
+			,"Channel":Channel})
 			
 			if !FileExist(File)
 				File := "plugins\Default.ahk"
