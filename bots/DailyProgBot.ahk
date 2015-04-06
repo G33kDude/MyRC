@@ -20,6 +20,7 @@ CommentUrlRE := ["^.+/(.+?)/.+?/(.+)$", "https://reddit.com/comments/$1/-/$2?con
 
 PostFormat := Chr(3) "04{} - {}"
 CommentFormat := Chr(3) "03{} - {}"
+ChallengeFormat := "#{}{} {}"
 
 Settings := Ini_Read("Settings.ini")
 MyBot := new IRCBot() ; Create a new instance of your bot
@@ -38,11 +39,7 @@ for each, Post in GetItems(HttpRequest(PostFeed), PreviousPosts)
 	Url := RegExReplace(Post.Url, PostUrlRE*)
 	Out .= Format(PostFormat, Post.title, Url) "`n"
 	if RegExMatch(Post.Title, ChallengeRE, Match)
-	{
-		; Send off for a topic so we can modify it
-		MyBot.NewChallenge := "#" Match2 . Match3 " " Url
-		MyBot._SendTCP("TOPIC " Channel "`r`n")
-	}
+		MyBot.ChangeTopicChallenge(Challenge, Format(ChallengeFormat, Match2, Match3, Url))
 }
 
 for each, Comment in GetItems(HttpRequest(CommentFeed), PreviousComments)
@@ -68,30 +65,44 @@ class IRCBot extends IRC
 			if (NewTopic != Msg)
 				this._SendTCP("TOPIC " Params[2] " :" NewTopic "`r`n")
 		}
+		
+		if this.Channels[Params[2], this.Nick, "MODE", "o"]
+			this.SendPRIVMSG("ChanServ", "deop " Params[2] " " this.Nick)
+	}
+	
+	OnMODE(Nick, User, Host, Cmd, Params, Msg, Data)
+	{
+		if this.Channels[Params[1], this.Nick, "MODE", "o"]
+			this._SendTCP("TOPIC " Params[1] "`r`n")
 	}
 	
 	OnPRIVMSG(Nick, User, Host, Cmd, Params, Msg, Data)
 	{
-		global PostFeed, PostUrlRE, ChallengeRE, Channel
+		global PostFeed, PostUrlRE, ChallengeRE, ChallengeFormat
+		Channel := Params[1]
 		Msg := Trim(Msg)
 		if (Msg = "!source")
-			this.SendPRIVMSG(Params[1], "https://github.com/G33kDude/MyRC/blob/dev/bots/DailyProgBot.ahk")
+			this.SendPRIVMSG(Channel, "https://github.com/G33kDude/MyRC/blob/dev/bots/DailyProgBot.ahk")
 		else if (Msg = "!topic")
 		{
 			for each, Post in GetItems(HttpRequest(PostFeed), [])
 			{
-				Url := RegExReplace(Post.Url, PostUrlRE*)
-				Print(Post.Title)
 				if RegExMatch(Post.Title, ChallengeRE, Match)
 				{
-					Print("Going to change topic")
-					; Send off for a topic so we can modify it
-					this.NewChallenge := "#" Match2 . Match3 " " Url
-					this._SendTCP("TOPIC " Channel "`r`n")
+					Url := RegExReplace(Post.Url, PostUrlRE*)
+					Challenge := Format(ChallengeFormat, Match2, Match3, Url)
+					this.ChangeTopicChallenge(Channel, Challenge)
 					Break
 				}
 			}
 		}
+	}
+	
+	ChangeTopicChallenge(Channel, NewChallenge)
+	{
+		; Send off for a topic so we can modify it
+		this.NewChallenge := NewChallenge
+		this.SendPRIVMSG("ChanServ", "op " Channel " " this.Nick)
 	}
 	
 	Log(Data)
