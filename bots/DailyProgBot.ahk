@@ -34,7 +34,9 @@ return
 
 Poll:
 Out := ""
-for each, Post in GetItems(HttpRequest(PostFeed), PreviousPosts)
+Tmp := HttpRequest(PostFeed)
+Tmp := GetItems(Tmp, PreviousPosts)
+for each, Post in Tmp
 {
 	Url := RegExReplace(Post.Url, PostUrlRE*)
 	Out .= Format(PostFormat, Post.title, Url) "`n"
