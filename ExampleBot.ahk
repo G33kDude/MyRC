@@ -52,9 +52,10 @@ class IRCBot extends IRC
 	}
 }
 
-Print(Text)
+Print(Params*)
 {
 	static _ := DllCall("AllocConsole") ; Create a console on script start
-	StdOut := FileOpen("CONOUT$", "w") ; Open the output
-	StdOut.Write(Text "`n") ; Write text to console output
+	StdOut := FileOpen("*", "w") ; Open the standard output
+	for each, Param in Params ; Iterate over function parameters
+		StdOut.Write(Param "`n") ; Append the parameter to the standard output
 }

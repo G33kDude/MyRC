@@ -52,11 +52,12 @@ class IRCBot extends IRC
 	}
 }
 
-Print(Text)
+Print(Params*)
 {
 	static _ := DllCall("AllocConsole")
-	StdOut := FileOpen("CONOUT$", "w")
-	StdOut.Write(Text "`n")
+	StdOut := FileOpen("*", "w")
+	for each, Param in Params
+		StdOut.Write(Param "`n")
 }
 
 GetRss(Feed, UserAgent="")

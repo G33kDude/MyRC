@@ -233,7 +233,7 @@ class Bot extends IRC
 
 Print(Params*){
 	static _ := DllCall("AllocConsole")
-	StdOut := FileOpen("CONOUT$", "w")
+	StdOut := FileOpen("*", "w")
 	for each, Param in Params
 		StdOut.Write(Param "`n")
 }
