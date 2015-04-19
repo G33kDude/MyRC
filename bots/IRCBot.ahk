@@ -212,11 +212,6 @@ class Bot extends IRC
 	; ERR_NICKNAMEINUSE
 	on433(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
-		this.Reconnect()
-	}
-	
-	Reconnect()
-	{
 		for Index, Nick in this.DefaultNicks
 			if (Nick == this.Nick)
 				Break
