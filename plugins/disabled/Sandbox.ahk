@@ -12,8 +12,9 @@ ahk.addScript(Script)
 
 Out := ahk.ahkFunction("x", Plugin.Params*)
 if InStr(Out, "`n")
-	Out := Ahkbin(Out)
-Chat(Channel, PRIVMSG.Nick ": " Out)
+	Ahkbin(Out, "GeekBot", "Sandbox", Channel)
+else
+	Chat(Channel, PRIVMSG.Nick ": " Out)
 ExitApp
 
 Ahkbin(Content, Name="", Desc="", Channel="")
@@ -31,5 +32,5 @@ Ahkbin(Content, Name="", Desc="", Channel="")
 	Pbin.Open("POST", URL, False)
 	Pbin.SetRequestHeader("Content-Type", "application/x-www-form-urlencoded")
 	Pbin.Send(Form)
-	return Pbin.Option(1)
+	; return Pbin.Option(1) ; Doesn't work in WINE
 }
