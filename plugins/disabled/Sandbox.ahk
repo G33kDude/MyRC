@@ -11,7 +11,7 @@ ahk.addFile("SandboxLibrary.ahk")
 ahk.addScript(Script)
 
 Out := ahk.ahkFunction("x", Plugin.Params*)
-if InStr(Out, "`n")
+if (InStr(Out, "`n") || StrLen(Out) > 100)
 	Ahkbin(Out, "GeekBot", "Sandbox", Channel)
 else
 	Chat(Channel, PRIVMSG.Nick ": " Out)
