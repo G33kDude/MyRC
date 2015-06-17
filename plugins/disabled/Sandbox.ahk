@@ -19,7 +19,7 @@ ExitApp
 
 Ahkbin(Content, Name="", Desc="", Channel="")
 {
-	static URL := "http://ahk.us.to/"
+	static URL := "http://p.ahkscript.org/"
 	Form := "code=" UriEncode(Content)
 	if Name
 		Form .= "&name=" UriEncode(Name)

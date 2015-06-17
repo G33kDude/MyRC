@@ -4,10 +4,5 @@
 	Desc: Links to the integrated pastebin.
 */
 
-if (Channel = "#ahk")
-	Message := "Please share your code on the official AutoHotkey pastebin: http://ahk.us.to/"
-else
-	Message := "Please share your code on the unofficial AHKScript pastebin: http://ahk.uk.to/"
-
-Chat(Channel, Message)
+Chat(Channel, "Please share your code on the official AutoHotkey pastebin: http://p.ahkscript.org/")
 ExitApp
