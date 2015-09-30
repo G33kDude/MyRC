@@ -21,7 +21,7 @@ if !(Result := Json_ToObj(Google.ResponseText).responseData.results[1])
 Url := UriDecode(Result.Url)
 SplitPath, Url, OutFileName, OutDir, OutExtension, OutNameNoExt, OutDrive
 
-if (OutDrive != "http://en.wikipedia.org")
+if !(OutDrive ~= "^https?://en\.wikipedia\.org")
 {
 	Chat(Channel, "Invalid url found")
 	ExitApp
