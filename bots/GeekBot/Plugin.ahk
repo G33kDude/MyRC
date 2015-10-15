@@ -4,7 +4,7 @@
 #SingleInstance, Off
 SetWorkingDir, %A_LineFile%\..
 SetBatchLines, -1
-#Include %A_LineFile%\..\lib
+#Include %A_LineFile%\..\..\..\lib
 #Include Socket.ahk
 #Include Json.ahk
 #Include Utils.ahk

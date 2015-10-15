@@ -1,8 +1,8 @@
 #NoEnv
 SetBatchLines, -1
-SetWorkingDir, %A_ScriptDir%\..
+SetWorkingDir, %A_ScriptDir%
 
-#Include %A_ScriptDir%\..\lib
+#Include %A_ScriptDir%\..\..\lib
 #Include Bind.ahk
 #Include Class_RichEdit.ahk
 #Include IRCClass.ahk
