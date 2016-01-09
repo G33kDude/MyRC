@@ -30,7 +30,7 @@ class CustomBase
 		this.Insert(Pos, Values*)
 	}
 	
-	RemoveAt(Pos, Length)
+	RemoveAt(Pos, Length=1)
 	{
 		if Pos is not integer
 			throw Exception("Parameter #1 invalid.", "", Pos)
