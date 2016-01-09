@@ -22,6 +22,12 @@ Stats := Kudos.Stats
 Nick := Plugin.Params[1] ? Plugin.Params[1] : PRIVMSG.Nick
 if (Nick != PRIVMSG.Nick)
 {
+	if !(IRC.GetChans()[Channel].HasKey(Plugin.Params[1]))
+	{
+		Chat(Channel, "Could not find specified user!")
+		ExitApp
+	}
+	
 	Stats[Nick] := Round(Stats[Nick]) + 1
 	FileOpen(FilePath, "w").Write(Json_FromObj(Kudos))
 	Chat(Channel, Nick " now has " Stats[Nick] " kudos")

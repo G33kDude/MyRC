@@ -175,6 +175,11 @@ class Bot extends IRC
 		this.UpdateListView()
 	}
 	
+	GetChans()
+	{
+		return this.Channels
+	}
+	
 	Log(Message)
 	{
 		Print(Message)
