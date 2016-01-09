@@ -49,8 +49,8 @@ OnTCPAccept()
 		return IRC.log("ERROR: Unkown method " Obj.MethodName)
 	ParamCount -= 2 ; Subtract 1 for IsFunc, and 1 for 'this'
 	
-	if !(Obj.Params.MaxIndex() == ParamCount)
-		return IRC.Log("ERROR: Invalid number of params: " Obj.Params.MaxIndex() "/" ParamCount)
+	if (Obj.Params.Length() != ParamCount)
+		IRC.Log("WARNING: Parameter count mismatch: " Obj.Params.Length() "/" ParamCount)
 	
 	retval := IRC[Obj.MethodName].(IRC, Obj.Params*)
 	newTcp.sendText(Json_FromObj({return: retval}))
