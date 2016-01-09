@@ -61,8 +61,8 @@ you just run it, it will automatically start all the bots.
 -----
 
 The sandbox plugin allows you to run AutoHotkey code through IRC chat commands.
-There are problems (security issues) with it that have yet to be addressed, but here's
-how to enable it anyway.
+There are problems (security issues) with it that have yet to be addressed,
+but here's how to enable it anyway.
 
 1. Download the sandbox dll from
 	[here](http://www.golguppe.com/autohotkey/sandbox/ahksandboxansi.dll).
@@ -74,6 +74,18 @@ how to enable it anyway.
 	ahksandboxansi.dll` as normal user on linux)
 4. Move the sandbox plugin from the disabled folder back into the normal
 	plugin folder.
+
+-----
+
+The python sandbox plugin allows you to run Python code through chat commands.
+It relies on an HTTP server written in python that wraps the excellent
+sandboxing package `pypy-sandbox`. The server has to be running for the
+plugin to work.
+
+```
+apt-get install pypy-sandbox
+python bots/GeekBot/PySandboxDaemon.py
+```
 
 -----
 
