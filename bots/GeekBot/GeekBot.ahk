@@ -41,7 +41,14 @@ OnTCPAccept()
 	newTcp := myTcp.accept()
 	Text := newTcp.recvText()
 	
-	Obj := Json_ToObj(Text)
+	try
+		Obj := Json_ToObj(Text)
+	catch
+	{
+		IRC.Log("ERROR: Invalid JSON received")
+		newTcp.__Delete()
+		return
+	}
 	
 	if !(ParamCount := IsFunc(IRC[Obj.MethodName]))
 		return IRC.log("ERROR: Unkown method " Obj.MethodName)
@@ -50,7 +57,7 @@ OnTCPAccept()
 	if (Obj.Params.Length() != ParamCount)
 		IRC.Log("WARNING: Parameter count mismatch: " Obj.Params.Length() "/" ParamCount)
 	
-	retval := IRC[Obj.MethodName].(IRC, Obj.Params*)
+	retval := IRC[Obj.MethodName].Call(IRC, Obj.Params*)
 	newTcp.sendText(Json_FromObj({return: retval}))
 	
 	newTcp.__Delete()
