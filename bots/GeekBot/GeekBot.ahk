@@ -102,7 +102,7 @@ class Bot extends IRC
 		if (Channel == this.Nick)
 		{
 			Channel := Nick
-			if !(Msg ~= "^" this.Trigger)
+			if (InStr(Msg, this.Trigger) != 1) ; If message doesn't start with trigger
 				Msg := this.Trigger . Msg
 		}
 		
