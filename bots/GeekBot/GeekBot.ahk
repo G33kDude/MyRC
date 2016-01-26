@@ -22,8 +22,6 @@ if !(Settings := Ini_Read(SettingsFile))
 if (Settings.Bitly.login)
 	Shorten(Settings.Bitly.login, Settings.Bitly.apiKey)
 
-DispatchPollingPlugins()
-
 Server := Settings.Server
 Nicks := StrSplit(Server.Nicks, ",", " `t")
 
@@ -56,23 +54,6 @@ OnTCPAccept()
 	newTcp.sendText(Json_FromObj({return: retval}))
 	
 	newTcp.__Delete()
-}
-
-DispatchPollingPlugins(Params*) ; Think of a better name for this
-{
-	global Settings
-	
-	if !Params.MaxIndex()
-	{
-		for Plugin, Json in Settings.Timers
-		{
-			Params := Json_ToObj(Json) ; Make sure to keep track of how Bind will be implemented in the final release
-			Tmp := Bind(A_ThisFunc, Plugin, Json) ; Keep track of these so I can disable the timer if we run this function a second time
-			SetTimer, %Tmp%, % Params.Period ? Params.Period : -0
-		}
-	}
-	else
-		Run(A_AhkPath, "plugins\" Params.Remove(1) ".ahk", Params*)
 }
 
 class Bot extends IRC
