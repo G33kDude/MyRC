@@ -139,7 +139,7 @@
 	
 	_onPRIVMSG(Nick,User,Host,Cmd,Params,Msg,Data)
 	{
-		if (RegExMatch(Msg, "^\x01([^ ]+)(?: (.+))?\x01$", Match))
+		if (RegExMatch(Msg, "^\x01([^ ]+)(?: (.*))?\x01$", Match))
 		{
 			this.onCTCP(Nick,User,Host,Match1,Params,Match2,Data)
 			return true ; true, we should stop from calling user function
