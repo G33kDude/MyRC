@@ -35,10 +35,9 @@ myTcp.listen()
 myTcp.onAccept := Func("OnTCPAccept")
 return
 
-OnTCPAccept()
+OnTCPAccept(tcp)
 {
-	global myTcp
-	newTcp := myTcp.accept()
+	newTcp := tcp.accept()
 	Text := newTcp.recvText()
 	
 	try
