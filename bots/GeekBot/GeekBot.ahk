@@ -42,25 +42,25 @@ OnTCPAccept()
 	Text := newTcp.recvText()
 	
 	try
-		Obj := Json_ToObj(Text)
-	catch
 	{
-		IRC.Log("ERROR: Invalid JSON received")
+		try
+			Obj := Json_ToObj(Text)
+		catch e
+			throw Exception("JSON Decode: " e.Message, e.What, e.Extra)
+		
+		if !(ParamCount := IsFunc(IRC[Obj.MethodName]))
+			throw Exception("Unkown method: " Obj.MethodName)
+		if (Obj.Params.Length() != ParamCount-2) ; -2 for IsFunc and implicit 'this'
+			IRC.Log("API WARNING: Parameter count mismatch: " Obj.Params.Length() "/" ParamCount-2)
+	
+		retval := IRC[Obj.MethodName].Call(IRC, Obj.Params*)
+		newTcp.sendText(Json_FromObj({return: retval}))
+	
+	} catch e {
+		IRC.Log("API ERROR: " e.Message)		
+	} finally {
 		newTcp.__Delete()
-		return
 	}
-	
-	if !(ParamCount := IsFunc(IRC[Obj.MethodName]))
-		return IRC.log("ERROR: Unkown method " Obj.MethodName)
-	ParamCount -= 2 ; Subtract 1 for IsFunc, and 1 for 'this'
-	
-	if (Obj.Params.Length() != ParamCount)
-		IRC.Log("WARNING: Parameter count mismatch: " Obj.Params.Length() "/" ParamCount)
-	
-	retval := IRC[Obj.MethodName].Call(IRC, Obj.Params*)
-	newTcp.sendText(Json_FromObj({return: retval}))
-	
-	newTcp.__Delete()
 }
 
 class Bot extends IRC
