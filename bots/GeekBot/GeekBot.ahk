@@ -3,7 +3,6 @@ SetBatchLines, -1
 SetWorkingDir, %A_ScriptDir%
 
 #Include %A_ScriptDir%\..\..\lib
-#Include Bind.ahk
 #Include Class_RichEdit.ahk
 #Include IRCClass.ahk
 #Include Json.ahk
