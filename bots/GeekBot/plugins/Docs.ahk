@@ -5,7 +5,7 @@
 */
 
 FileRead, Json, Docs.json
-Docs := Json_ToObj(Json)
+Docs := Jxon_Load(Json)
 DocsList := []
 For Name, Location in Docs
 	DocsList[A_Index] := Name

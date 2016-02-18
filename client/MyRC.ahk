@@ -5,7 +5,7 @@ SetWorkingDir, %A_ScriptDir%
 #Include %A_ScriptDir%\..\lib
 #Include Class_RichEdit.ahk
 #Include IRCClass.ahk
-#Include Json.ahk
+#Include Jxon.ahk
 #Include Socket.ahk
 #Include Utils.ahk
 
@@ -87,7 +87,7 @@ OnTCPAccept()
 	newTcp := myTcp.accept()
 	Text := newTcp.recvText()
 	
-	Obj := Json_ToObj(Text)
+	Obj := Jxon_Load(Text)
 	
 	if !(ParamCount := IsFunc(MyBot[Obj.MethodName]))
 		return MyBot.log("ERROR: Unkown method " Obj.MethodName)
@@ -97,7 +97,7 @@ OnTCPAccept()
 		return MyBot.Log("ERROR: Invalid number of params: " Obj.Params.MaxIndex() "/" ParamCount)
 	
 	retval := MyBot[Obj.MethodName].(MyBot, Obj.Params*)
-	newTcp.sendText(Json_FromObj({return: retval}))
+	newTcp.sendText(Jxon_Dump({return: retval}))
 	
 	newTcp.__Delete()
 }

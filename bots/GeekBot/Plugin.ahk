@@ -6,11 +6,11 @@ SetWorkingDir, %A_LineFile%\..
 SetBatchLines, -1
 #Include %A_LineFile%\..\..\..\lib
 #Include Socket.ahk
-#Include Json.ahk
+#Include Jxon.ahk
 #Include Utils.ahk
 
 Json = %1%
-for Var, Value in Json_ToObj(Json)
+for Var, Value in Jxon_Load(Json)
 	%Var% := Value
 
 Settings := Ini_Read("Settings.ini")
@@ -29,7 +29,7 @@ class IRC
 	{
 		TCP := new SocketTCP()
 		TCP.Connect("localhost", 26656)
-		TCP.SendText(Json_FromObj({MethodName: Name, Params: Params}))
-		return Json_ToObj(TCP.recvText()).return
+		TCP.SendText(Jxon_Dump({MethodName: Name, Params: Params}))
+		return Jxon_Load(TCP.recvText()).return
 	}
 }

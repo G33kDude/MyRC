@@ -5,7 +5,7 @@ SetWorkingDir, %A_ScriptDir%
 #Include %A_ScriptDir%\..\..\lib
 #Include Class_RichEdit.ahk
 #Include IRCClass.ahk
-#Include Json.ahk
+#Include Jxon.ahk
 #Include Socket.ahk
 #Include Utils.ahk
 
@@ -42,7 +42,7 @@ OnTCPAccept(tcp)
 	try
 	{
 		try
-			Obj := Json_ToObj(Text)
+			Obj := Jxon_Load(Text)
 		catch e
 			throw Exception("JSON Decode: " e.Message, e.What, e.Extra)
 		
@@ -52,7 +52,7 @@ OnTCPAccept(tcp)
 			IRC.Log("API WARNING: Parameter count mismatch: " Obj.Params.Length() "/" ParamCount-2)
 	
 		retval := IRC[Obj.MethodName].Call(IRC, Obj.Params*)
-		newTcp.sendText(Json_FromObj({return: retval}))
+		newTcp.sendText(Jxon_Dump({return: retval}))
 	
 	} catch e {
 		IRC.Log("API ERROR: " e.Message)		
@@ -109,7 +109,7 @@ class Bot extends IRC
 		{
 			Match1 := RegExReplace(Match1, "i)[^a-z0-9]")
 			File := "plugins\" Match1 ".ahk"
-			Param := Json_FromObj({"PRIVMSG":{"Nick":Nick,"User":User,"Host":Host
+			Param := Jxon_Dump({"PRIVMSG":{"Nick":Nick,"User":User,"Host":Host
 			,"Cmd":Cmd,"Params":Params,"Msg":Msg,"Data":Data}
 			,"Plugin":{"Name":Match1,"Param":Match2,"Params":[Match2],"Match":Match}
 			,"Channel":Channel})

@@ -12,7 +12,7 @@ Google.Open("GET", Base "&q=" UriEncode("site:wikipedia.org " Plugin.Param), fal
 Google.SetRequestHeader("User-Agent", UserAgent)
 Google.Send()
 
-if !(Result := Json_ToObj(Google.ResponseText).responseData.results[1])
+if !(Result := Jxon_Load(Google.ResponseText).responseData.results[1])
 {
 	Chat(Channel, "No results found")
 	ExitApp

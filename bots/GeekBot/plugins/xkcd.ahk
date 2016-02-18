@@ -12,7 +12,7 @@ Google.Open("GET", Base "&q=" UriEncode("site:xkcd.com -site:*.xkcd.com " Plugin
 Google.SetRequestHeader("User-Agent", UserAgent)
 Google.Send()
 
-if !(Result := Json_ToObj(Google.ResponseText).responseData.results[1])
+if !(Result := Jxon_Load(Google.ResponseText).responseData.results[1])
 {
 	Chat(Channel, "No results found")
 	ExitApp
@@ -31,7 +31,7 @@ xkcd.Open("GET", Url "info.0.json", false)
 xkcd.SetRequestHeader("User-Agent", UserAgent)
 xkcd.Send()
 
-AltText := Json_ToObj(xkcd.responseText).alt
+AltText := Jxon_Load(xkcd.responseText).alt
 if AltText
 	Chat(Channel, AltText " - " Url)
 else

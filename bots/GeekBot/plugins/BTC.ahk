@@ -13,7 +13,7 @@ http := ComObjCreate("WinHttp.WinHttpRequest.5.1")
 http.open("GET", "https://btc-e.com/api/3/ticker/btc_" Currency, false)
 http.Send()
 
-Rate := Json_ToObj(http.responseText)["btc_" currency].last
+Rate := Jxon_Load(http.responseText)["btc_" currency].last
 
 Chat(Channel, "One Bitcoin is currently worth " Rate " " Currency)
 ExitApp
