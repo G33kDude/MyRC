@@ -23,7 +23,7 @@ SplitPath, Url, OutFileName, OutDir, OutExtension, OutNameNoExt, OutDrive
 
 if !(OutDrive ~= "^https?://en\.wikipedia\.org")
 {
-	Chat(Channel, "Invalid url found")
+	Chat(Channel, "Non wikipedia URL found: " OutDrive)
 	ExitApp
 }
 
