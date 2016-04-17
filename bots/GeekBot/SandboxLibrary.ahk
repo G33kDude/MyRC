@@ -7,6 +7,12 @@ StrSplit(String, Delim="", Omit="")
 	return Out
 }
 
+StrReplace(Haystack, SearchText, ReplaceText="")
+{
+	StringReplace, OutputVar, Haystack, %SearchText%, %ReplaceText%, All
+	return OutputVar
+}
+
 Object(p*)
 {
 	Out := []
