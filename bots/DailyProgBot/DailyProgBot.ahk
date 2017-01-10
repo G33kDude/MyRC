@@ -1,8 +1,8 @@
 #NoEnv
 SetBatchLines, -1
-SetWorkingDir, %A_ScriptDir%\..
+SetWorkingDir, %A_ScriptDir%\..\..
 
-#Include %A_ScriptDir%\..\lib
+#Include %A_ScriptDir%\..\..\lib
 #Include IRCClass.ahk
 #Include Socket.ahk
 #Include Utils.ahk
@@ -10,7 +10,6 @@ SetWorkingDir, %A_ScriptDir%\..
 PostFeed := "http://www.reddit.com/r/dailyprogrammer.rss"
 CommentFeed := "http://www.reddit.com/r/dailyprogrammer/comments.rss"
 UserAgent := "DailyProgBot by /u/G33kDude (http://github.com/G33kDude/MyRC)"
-Channel := "#reddit-dailyprogrammer"
 
 ChallengeRE := "i)^\[([\d-]+)\] Challenge #(\d+) \[(.).*?\] (.+)$"
 
@@ -22,13 +21,16 @@ PostFormat := Chr(3) "04{} - {}"
 CommentFormat := Chr(3) "03{} - {}"
 ChallengeFormat := "#{}{} {}"
 
-Settings := Ini_Read("Settings.ini")
-MyBot := new IRCBot() ; Create a new instance of your bot
-MyBot.Connect("chat.freenode.net", 6667, "DailyProgBot",,, Settings.Server.Pass)
-MyBot.SendJOIN(Channel) ; Join a channel
+Server := Ini_Read(A_ScriptDir "\Settings.ini").Server
+
+MyBot := new IRCBot()
+MyBot.Connect(Server.Addr, Server.Port, Server.Nick, Server.User,, Server.Pass)
+MyBot.SendJOIN(Server.Chan)
+
 PreviousPosts := [], PreviousComments := []
 GetItems(HttpRequest(PostFeed), PreviousPosts)
 GetItems(HttpRequest(CommentFeed), PreviousComments)
+
 SetTimer, Poll, % 1 * 60 * 1000
 return
 
@@ -52,7 +54,7 @@ for each, Comment in GetItems(HttpRequest(CommentFeed), PreviousComments)
 }
 
 if Out
-	MyBot.SendPRIVMSG(Channel, Out)
+	MyBot.SendPRIVMSG(Server.Chan, Out)
 return
 
 class IRCBot extends IRC

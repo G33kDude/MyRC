@@ -1,12 +1,11 @@
 #NoEnv
 SetBatchLines, -1
-SetWorkingDir, %A_ScriptDir%\..
+SetWorkingDir, %A_ScriptDir%
 
-#Include %A_ScriptDir%\..\lib
-#Include Bind.ahk
+#Include %A_ScriptDir%\..\..\lib
 #Include Class_RichEdit.ahk
 #Include IRCClass.ahk
-#Include Json.ahk
+#Include Jxon.ahk
 #Include Socket.ahk
 #Include Utils.ahk
 
@@ -22,8 +21,6 @@ if !(Settings := Ini_Read(SettingsFile))
 if (Settings.Bitly.login)
 	Shorten(Settings.Bitly.login, Settings.Bitly.apiKey)
 
-DispatchPollingPlugins()
-
 Server := Settings.Server
 Nicks := StrSplit(Server.Nicks, ",", " `t")
 
@@ -37,42 +34,31 @@ myTcp.listen()
 myTcp.onAccept := Func("OnTCPAccept")
 return
 
-OnTCPAccept()
+OnTCPAccept(tcp)
 {
-	global myTcp
-	newTcp := myTcp.accept()
+	newTcp := tcp.accept()
 	Text := newTcp.recvText()
 	
-	Obj := Json_ToObj(Text)
-	
-	if !(ParamCount := IsFunc(IRC[Obj.MethodName]))
-		return IRC.log("ERROR: Unkown method " Obj.MethodName)
-	ParamCount -= 2 ; Subtract 1 for IsFunc, and 1 for 'this'
-	
-	if !(Obj.Params.MaxIndex() == ParamCount)
-		return IRC.Log("ERROR: Invalid number of params: " Obj.Params.MaxIndex() "/" ParamCount)
-	
-	retval := IRC[Obj.MethodName].(IRC, Obj.Params*)
-	newTcp.sendText(Json_FromObj({return: retval}))
-	
-	newTcp.__Delete()
-}
-
-DispatchPollingPlugins(Params*) ; Think of a better name for this
-{
-	global Settings
-	
-	if !Params.MaxIndex()
+	try
 	{
-		for Plugin, Json in Settings.Timers
-		{
-			Params := Json_ToObj(Json) ; Make sure to keep track of how Bind will be implemented in the final release
-			Tmp := Bind(A_ThisFunc, Plugin, Json) ; Keep track of these so I can disable the timer if we run this function a second time
-			SetTimer, %Tmp%, % Params.Period ? Params.Period : -0
-		}
+		try
+			Obj := Jxon_Load(Text)
+		catch e
+			throw Exception("JSON Decode: " e.Message, e.What, e.Extra)
+		
+		if !(ParamCount := IsFunc(IRC[Obj.MethodName]))
+			throw Exception("Unkown method: " Obj.MethodName)
+		if (Obj.Params.Length() != ParamCount-2) ; -2 for IsFunc and implicit 'this'
+			IRC.Log("API WARNING: Parameter count mismatch: " Obj.Params.Length() "/" ParamCount-2)
+	
+		retval := IRC[Obj.MethodName].Call(IRC, Obj.Params*)
+		newTcp.sendText(Jxon_Dump({return: retval}))
+	
+	} catch e {
+		IRC.Log("API ERROR: " e.Message)		
+	} finally {
+		newTcp.__Delete()
 	}
-	else
-		Run(A_AhkPath, "plugins\" Params.Remove(1) ".ahk", Params*)
 }
 
 class Bot extends IRC
@@ -114,7 +100,7 @@ class Bot extends IRC
 		if (Channel == this.Nick)
 		{
 			Channel := Nick
-			if !(Msg ~= "^" this.Trigger)
+			if (InStr(Msg, this.Trigger) != 1) ; If message doesn't start with trigger
 				Msg := this.Trigger . Msg
 		}
 		
@@ -123,7 +109,7 @@ class Bot extends IRC
 		{
 			Match1 := RegExReplace(Match1, "i)[^a-z0-9]")
 			File := "plugins\" Match1 ".ahk"
-			Param := Json_FromObj({"PRIVMSG":{"Nick":Nick,"User":User,"Host":Host
+			Param := Jxon_Dump({"PRIVMSG":{"Nick":Nick,"User":User,"Host":Host
 			,"Cmd":Cmd,"Params":Params,"Msg":Msg,"Data":Data}
 			,"Plugin":{"Name":Match1,"Param":Match2,"Params":[Match2],"Match":Match}
 			,"Channel":Channel})
@@ -173,6 +159,11 @@ class Bot extends IRC
 		
 		this.UpdateDropDown()
 		this.UpdateListView()
+	}
+	
+	GetChans()
+	{
+		return this.Channels
 	}
 	
 	Log(Message)

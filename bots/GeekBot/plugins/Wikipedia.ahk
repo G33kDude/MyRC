@@ -8,11 +8,11 @@ UserAgent := "GeekBot by GeekDude (Contact me on GitHub: https://github.com/G33k
 Base := "https://ajax.googleapis.com/ajax/services/search/web?v=1.0"
 
 Google := ComObjCreate("WinHttp.WinHttpRequest.5.1")
-Google.Open("GET", Base "&q=" UriEncode("site:wikipedia.org " Plugin.Param), false)
+Google.Open("GET", Base "&q=" UriEncode("site:en.wikipedia.org " Plugin.Param), false)
 Google.SetRequestHeader("User-Agent", UserAgent)
 Google.Send()
 
-if !(Result := Json_ToObj(Google.ResponseText).responseData.results[1])
+if !(Result := Jxon_Load(Google.ResponseText).responseData.results[1])
 {
 	Chat(Channel, "No results found")
 	ExitApp
@@ -23,7 +23,7 @@ SplitPath, Url, OutFileName, OutDir, OutExtension, OutNameNoExt, OutDrive
 
 if !(OutDrive ~= "^https?://en\.wikipedia\.org")
 {
-	Chat(Channel, "Invalid url found")
+	Chat(Channel, "Non wikipedia URL found: " OutDrive)
 	ExitApp
 }
 

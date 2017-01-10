@@ -15,7 +15,7 @@ for Alias, Repl in Settings.Aliases
 				Plugin.Param := Match2 " " Plugin.Param
 			}
 			
-			Param := Json_FromObj({"PRIVMSG": PRIVMSG
+			Param := Jxon_Dump({"PRIVMSG": PRIVMSG
 			, "Channel": Channel
 			, "Plugin": Plugin})
 			
@@ -31,7 +31,7 @@ for Alias, Repl in Settings.Aliases
 }
 
 FileRead, Docs, Docs.json
-Docs := Json_ToObj(Docs)
+Docs := Jxon_Load(Docs)
 
 if Docs.HasKey(Plugin.Match)
 {
@@ -40,8 +40,8 @@ if Docs.HasKey(Plugin.Match)
 }
 else
 {
-	Plugin.Name := "Search", Plugin.Param := "site:ahkscript.org/ OR site:autohotkey.com/board/ " Plugin.Match
-	Run(A_AhkPath, "plugins\Search.ahk", Json_FromObj({"PRIVMSG":PRIVMSG,"Channel":Channel,"Plugin":Plugin}))
+	Plugin.Name := "Search", Plugin.Param := "site:autohotkey.com/boards/ " Plugin.Match
+	Run(A_AhkPath, "plugins\Search.ahk", Jxon_Dump({"PRIVMSG":PRIVMSG,"Channel":Channel,"Plugin":Plugin}))
 }
 ExitApp
 

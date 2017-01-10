@@ -1,47 +1,34 @@
 #NoEnv
 SetBatchLines, -1
-SetWorkingDir, %A_ScriptDir%\..
+SetWorkingDir, %A_ScriptDir%\..\..
 
-#Include %A_ScriptDir%\..\lib
+#Include %A_ScriptDir%\..\..\lib
 #Include IRCClass.ahk
 #Include Socket.ahk
 #Include Utils.ahk
 
-Feed := "http://ahkscript.org/boards/feed.php"
 UserAgent := "Mozilla/5.0 (X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/21.0"
-Channel := "#AhkScript"
 
-BadForums =
-( Join, Comments
-Ich brauche Hilfe ; German
-Skripte und Funktionen
-Tooltime
-Allgemeines
-Pedir Ayuda ; Spanish
-Scripts y Funciones
-Tutoriales
-Otras Utilidades y Recursos
-)
-
-Settings := Ini_Read("Settings.ini")
+Settings := Ini_Read(A_ScriptDir "\Settings.ini")
 Server := Settings.Server
 
 if (Settings.Bitly.login)
 	Shorten(Settings.Bitly.login, Settings.Bitly.apiKey)
 
-MyBot := new IRCBot() ; Create a new instance of your bot
-MyBot.Connect(Server.Addr, Server.Port, "ForumBot", Server.User, Server.Nick, Server.Pass) ; Connect to an IRC server
-MyBot.SendJOIN(Channel) ; Join a channel
-GetNewPosts()
+MyBot := new IRCBot()
+MyBot.Connect(Server.Addr, Server.Port, Server.Nick, Server.User,, Server.Pass)
+MyBot.SendJOIN(Server.Chan)
+
+GetNewPosts(Settings.Feed.Url, UserAgent, Settings.Feed.Blacklist)
 SetTimer, Poll, % 1 * 60 * 1000
 return
 
 Poll:
 Out := ""
-for each, Post in GetNewPosts()
+for each, Post in GetNewPosts(Settings.Feed.Url, UserAgent, Settings.Feed.Blacklist)
 	Out := Chr(3) "03" Post.Author " - " Post.Title " - " Shorten(Post.Url) "`n" Out
 if Out
-	MyBot.SendPRIVMSG(Channel, Out)
+	MyBot.SendPRIVMSG(Server.Chan, Out)
 return
 
 class IRCBot extends IRC
@@ -75,10 +62,9 @@ GetRss(Feed, UserAgent="")
 		return
 }
 
-GetNewPosts()
+GetNewPosts(Feed, UserAgent, Blacklist="")
 {
 	static Previous := []
-	global BadForums, UserAgent, Feed
 	
 	; Trim out some fluff that breaks wine compatiblity, as well as remove the irrelevant error messages at the end of the feed
 	; I can use such an "unsafe" regex because user inputted < and > are escaped as &lt; and &gt;
@@ -101,7 +87,7 @@ GetNewPosts()
 		if !Previous[Url]
 		{
 			Title := HtmlDecode(entry.selectSingleNode("title").text)
-			if Title contains %BadForums%
+			if Title contains %Blacklist%
 				continue
 			
 			Author := entry.selectSingleNode("author/name").text

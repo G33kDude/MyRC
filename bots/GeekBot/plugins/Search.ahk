@@ -22,7 +22,7 @@ Search(Text)
 		FileRead, Json, temp\Search.json
 		FileDelete, temp\Search.json
 		
-		Results := Json_ToObj(Json).responseData.results
+		Results := Jxon_Load(Json).responseData.results
 		Results.Remove(1)
 		
 		for each, Result in Results
@@ -39,7 +39,7 @@ Search(Text)
 		File.Write(Response)
 		File.Close()
 		
-		if !(Result := Json_ToObj(Response).responseData.results[1])
+		if !(Result := Jxon_Load(Response).responseData.results[1])
 			return "No results found"
 		Out := HtmlDecode(Result.titleNoFormatting) " - " Shorten(UriDecode(Result.url))
 	}
