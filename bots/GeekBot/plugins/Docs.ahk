@@ -1,92 +1,74 @@
-﻿#Include %A_LineFile%\..\..\Plugin.ahk
+#Include %A_LineFile%\..\..\Plugin.ahk
 /*
 	Usage: Docs <Page name>
 	Desc: Finds a page in the documentation.
+	
+	Update: Changed matching function to Fuzzy() - https://autohotkey.com/boards/viewtopic.php?f=6&t=28677
 */
+
+if !StrLen(Plugin.Param)
+{
+	Chat(Channel, "No results found")
+	ExitApp
+}
 
 FileRead, Json, Docs.json
 Docs := Jxon_Load(Json)
 DocsList := []
+
 For Name, Location in Docs
 	DocsList[A_Index] := Name
 
-if (Match := MatchItemFromList(DocsList, Plugin.Param))
-	Out := Match.Text " - " Shorten("http://ahkscript.org/" Docs[Match.Text])
+Match := Fuzzy(Plugin.Param, DocsList)
+
+if StrLen(Match.1) && StrLen(Docs[Match.1])
+	Out := Match.1 " - " Shorten("http://ahkscript.org/" Docs[Match.1])
 else
 	Out := "No results found"
 
 Chat(Channel, Out)
 ExitApp
 
-; Modified from http://www.autohotkey.com/board/topic/35990-string-matching-using-trigrams/
-MatchItemFromList(sList, sItem)
-{
-	iLength := StrLen(sItem)
-	iTrigrams := iLength-2
-	iCount := sList.MaxIndex()
-	
-	loop, %iCount%
-		if (sList[A_Index] = sItem)
-			return {"Fitness":100, "Index":A_Index, "Text": sList[A_Index]}
-	if (iLength < 3)
-		return False
-	else ; Get Trigram count
-	{
-		sItem_ := []
-		Loop, % iTrigrams
-		{
-			; Check if the trigram we're about to extract is unique
-			i := InStr(sItem, SubStr(sItem, A_Index, 3), False, 1)
-			if (i && i < A_Index)
-			{
-				sItem_[i] += 1 ; Not unique, add count to original
-				sItem_[A_Index] := 0 ; discard current index
-			}
-			else
-				sItem_[A_Index] := InStrCount(sItem, SubStr(sItem, A_Index, 3))
+Fuzzy(input, arr) {
+	arren:=[]
+	input := StrReplace(input, " ", "")
+	if !StrLen(input) ; input is empty, just return the array
+		return arr
+	for id, item in arr {
+		taken:=[], needle:="i)", limit:=false
+		name:=StrReplace(item, " ", "")
+		Loop, Parse, input
+			taken[A_LoopField] := (StrLen(taken[A_LoopField])?taken[A_LoopField]+1:1)
+		for char, hits in taken {
+			StrReplace(name, char, char, found)
+			if (found<hits) {
+				limit:=true
+				break
+			} needle .= "(?=.*\Q" char "\E)"
+		} if RegExMatch(name, needle) && !limit
+			arren.Insert(item)
+	} for index, item in arren, i:=0 ; contains
+		if InStr(item, input)
+			arren.RemoveAt(index), arren.InsertAt(++i, item)
+	for index, item in arren, outline := [] { ; get outlines based on spaces
+		for num, word in StrSplit(item, " ") {
+			outline[index] .= SubStr(word, 1, 1)
+			continue
 		}
-	}
-	
-	sList_Diff := []
-	;COMPARE TRIGRAMS
-	Loop, % iCount
-	{
-		i := A_Index
-		if (StrLen(sList[i]) < 3)
-			sList_Diff[i] := -1
-		else
-		{
-			sList_Diff[i] := 0
-			Loop, %iTrigrams% ; Get trigram count
-			{
-				If (sItem_[A_Index])
-					sList_Diff[i] += Abs(InStrCount(sList[i], SubStr(sItem, A_Index, 3)) - sItem_[A_Index])
-			}
-		}
-	}
-	
-	iBestI := 0
-	iBestD := 0x999999
-	Loop, %iCount%
-	{
-		if (sList_Diff[A_Index] != -1 && sList_Diff[A_Index] < iBestD)
-		{
-			iBestD := sList_Diff[A_Index]
-			iBestI := A_Index
-		}
-	}
-	
-	;Round((iTrigrams - iBestD) * 100 / iTrigrams)
-	Return {"Fitness": iBestD, "Index":iBestI, "Text": sList[iBestI]}
-}
-
-;Returns the number of times a trigrams occurs in a string
-InStrCount(ByRef Haystack, Trigram) {
-	j := 0, i := 1
-	Loop {
-		i := InStr(Haystack, Trigram, False, i)
-		If Not i
-			Return j
-		j += 1, i += 3
-	}
+	} for index, item in arren, i:=0 ; outline
+		if InStr(RegExReplace(item, "[^A-Z0-9]"), input) || InStr(temp:=outline[index], input)
+			arren.RemoveAt(index), arren.InsertAt(++i, item), outline.RemoveAt(index), outline.InsertAt(i, item)
+	for index, item in arren, i:=0 ; word start (contains)
+		if (SubStr(item, InStr(item, input) - 1, 1) = " ") && InStr(item, input)
+			arren.RemoveAt(index), arren.InsertAt(++i, item)
+	for index, item in arren, i:=0 ; word start
+		if (InStr(item, input) = 1)
+			arren.RemoveAt(index), arren.InsertAt(++i, item)
+	for index, item in arren, i:=0 ; outline is equal to input
+		if (outline[index] = input)
+			arren.RemoveAt(index), arren.InsertAt(++i, item)
+	for index, item in arren, i:=0 ; worst start and ONLY word
+		if (InStr(item, input) = 1) && !InStr(item, " ")
+			arren.RemoveAt(index), arren.InsertAt(++i, item)
+	return arren
 }
