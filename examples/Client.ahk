@@ -2,18 +2,16 @@
 SetBatchLines, -1
 SetWorkingDir, %A_ScriptDir%
 
-#Include %A_ScriptDir%\..\lib
-#Include Class_RichEdit.ahk
-#Include IRCClass.ahk
-#Include Jxon.ahk
-#Include Socket.ahk
-#Include Utils.ahk
+#Include <Socket>
+#Include ..\MyRC.ahk
+#Include lib\Class_RichEdit.ahk
+#Include lib\Utils.ahk
 
 SettingsFile := "Settings.ini"
 
 if !(Settings := Ini_Read(SettingsFile))
 {
-	FileCopy, DefaultSettings.ini, %SettingsFile%, 1
+	FileCopy, ClientDefaultSettings.ini, %SettingsFile%, 1
 	MsgBox, There was a problem reading your Settings.ini file. Please fill in the newly generated Settings.ini
 	ExitApp
 }
@@ -57,11 +55,6 @@ OnMessage(0x4E, "WM_NOTIFY")
 MyBot := new Bot(Settings.Trigger, Settings.Greetings, Settings.Aliases, Nicks, Settings.ShowHex)
 MyBot.Connect(Server.Addr, Server.Port, Nicks[1], Server.User, Server.Nick, Server.Pass)
 MyBot.SendJOIN(StrSplit(Server.Channels, ",", " `t")*)
-
-myTcp := new SocketTCP()
-myTcp.bind("addr_any", 26656)
-myTcp.listen()
-myTcp.onAccept := Func("OnTCPAccept")
 return
 
 WM_NOTIFY(wParam, lParam, Msg, hWnd)
@@ -79,27 +72,6 @@ WM_NOTIFY(wParam, lParam, Msg, hWnd)
 			Run, % Chat.GetTextRange(Min, Max)
 		}
 	}
-}
-
-OnTCPAccept()
-{
-	global myTcp
-	newTcp := myTcp.accept()
-	Text := newTcp.recvText()
-	
-	Obj := Jxon_Load(Text)
-	
-	if !(ParamCount := IsFunc(MyBot[Obj.MethodName]))
-		return MyBot.log("ERROR: Unkown method " Obj.MethodName)
-	ParamCount -= 2 ; Subtract 1 for IsFunc, and 1 for 'this'
-	
-	if !(Obj.Params.MaxIndex() == ParamCount)
-		return MyBot.Log("ERROR: Invalid number of params: " Obj.Params.MaxIndex() "/" ParamCount)
-	
-	retval := MyBot[Obj.MethodName].(MyBot, Obj.Params*)
-	newTcp.sendText(Jxon_Dump({return: retval}))
-	
-	newTcp.__Delete()
 }
 
 GuiSize:

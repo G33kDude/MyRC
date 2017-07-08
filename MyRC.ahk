@@ -27,8 +27,7 @@
 		this.Name := Name ? Name : Nick
 		this.Pass := Pass
 		
-		if !(Sock := this.TCP.Connect(Server, Port))
-			return 0
+		Sock := this.TCP.Connect([Server, Port])
 		
 		if Pass
 			this._SendRaw("PASS " Pass)
@@ -38,26 +37,24 @@
 		return Sock
 	}
 	
-	_HandleRecv(Skt)
+	; Called in the context of the socket instance
+	_HandleRecv()
 	{
-		; This is necessary becase _HandleRecv() is called in the context of the socket class
-		this := this.Parent
+		Data .= this.RecvText()
 		
-		this.Data .= Skt.RecvText()
-		
-		DatArray := StrSplit(this.Data, "`r`n", "`r`n")
-		this.Data := DatArray.Remove(DatArray.MaxIndex())
+		DatArray := StrSplit(Data, "`r`n", "`r`n")
+		Data := DatArray.Remove(DatArray.MaxIndex())
 		
 		for each, Segment in DatArray
-			this._OnRecv(Segment)
+			this.Parent._OnRecv(Segment)
 		
 		return
 	}
 	
-	_HandleDisc(Skt)
+	; Called in the context of the socket instance
+	_HandleDisc()
 	{
-		this := this.Parent
-		this.onDisconnect(Skt)
+		this.Parent.onDisconnect(this)
 	}
 	
 	_OnRecv(Data)
