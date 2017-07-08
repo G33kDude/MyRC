@@ -40,8 +40,8 @@ if Docs.HasKey(Plugin.Match)
 }
 else
 {
-	Plugin.Name := "Search", Plugin.Param := "site:autohotkey.com/boards/ " Plugin.Match
-	Run(A_AhkPath, "plugins\Search.ahk", Jxon_Dump({"PRIVMSG":PRIVMSG,"Channel":Channel,"Plugin":Plugin}))
+	Plugin.Name := "Docs", Plugin.Param := Plugin.Match
+	Run(A_AhkPath, "plugins\Docs.ahk", Jxon_Dump({"PRIVMSG":PRIVMSG,"Channel":Channel,"Plugin":Plugin}))
 }
 ExitApp
 
