@@ -1,7 +1,5 @@
-backup
+# AHK Studio backup folders
+backup/
+
+# Example scripts settings
 Settings.ini
-AutoHotkey.exe
-temp
-other
-state
-ahksandboxansi.dll
